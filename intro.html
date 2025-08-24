@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>イントロ</title>
+  <link rel="stylesheet" href="assets/style.css"/>
+
+  <style>
+    :root{ --stageW:min(100vw,720px); --stageH:calc(var(--stageW)*(1280/720)); --btnH:44px; --fzBtn:18px; }
+    html, body { height:100%; margin:0 !important; padding:0 !important; }
+    body{ background:#000; }
+    #stage, #stage * { box-sizing: border-box; }
+    #stage, #stage .wrap, #stage .container, #stage .card, #stage .stage-main {
+      margin:0 !important; padding:0 !important; border:0 !important; border-radius:0 !important; background:transparent !important; box-shadow:none !important;
+    }
+    #stage{ width:100vw; min-height:100vh; display:block; }
+    #stage .wrap{
+      width:var(--stageW) !important; height:var(--stageH) !important; margin:0 auto !important;
+      position:relative !important; overflow:hidden !important; background:#000;
+    }
+    #stage video{ width:100% !important; height:100% !important; display:block !important; object-fit:cover !important; background:#000; }
+    #stage #skip{
+      position:absolute !important; right:12px !important; top:calc(12px + env(safe-area-inset-top)) !important; z-index:10 !important;
+      height:var(--btnH) !important; padding:0 16px !important; border:0 !important; border-radius:999px !important;
+      font-size:var(--fzBtn) !important; font-weight:700 !important; color:#fff !important;
+      background:rgba(0,0,0,.35) !important; backdrop-filter:blur(4px); -webkit-tap-highlight-color:transparent; cursor:pointer;
+    }
+    #stage #skip:active{ transform:scale(.98); }
+    #stage #sound{
+      position:absolute !important; left:50% !important; top:50% !important; transform:translate(-50%,-50%) !important; z-index:9 !important;
+      height:var(--btnH) !important; padding:0 16px !important; border:0 !important; border-radius:999px !important;
+      font-size:var(--fzBtn) !important; font-weight:700 !important; color:#fff !important;
+      background:rgba(0,0,0,.35) !important; backdrop-filter:blur(4px); -webkit-tap-highlight-color:transparent; cursor:pointer;
+    }
+    #stage #sound:active{ transform:translate(-50%,-50%) scale(.98); }
+    #stage #start{ display:none !important; }
+  </style>
+</head>
+<body>
+  <main id="stage">
+    <div class="wrap">
+      <!-- 不写 <source>，由 JS 决定是否需要带缓存破坏参数 -->
+      <video id="intro" playsinline webkit-playsinline muted autoplay></video>
+
+      <button id="skip">スキップ</button>
+      <button id="sound">サウンドON</button>
+      <button id="start" aria-hidden="true" tabindex="-1"></button>
+    </div>
+  </main>
+
+  <script>
+    const v = document.getElementById('intro');
+    const skipBtn = document.getElementById('skip');
+    const soundBtn = document.getElementById('sound');
+
+    // —— 只在从 register/login 跳转过来时，给视频地址加一次性参数以绕过缓存 —— //
+    (function setVideoSrc(){
+      const BASE_SRC = 'assets/intro.mp4'; // 文件名和路径不变
+      const ref = document.referrer || '';
+      const fromAuth = /\/register\.html($|\?)/.test(ref) || /\/login\.html($|\?)/.test(ref);
+      // 也兼容你可能带的 ?from=auth 场景
+      const sp = new URLSearchParams(location.search);
+      const hinted = sp.has('from') && sp.get('from') === 'auth';
+
+      // 仅当 fromAuth 或 hinted 为真时，追加一次 cache-busting；否则用纯路径（走正常缓存）
+      const src = (fromAuth || hinted) ? `${BASE_SRC}?v=${Date.now()}` : BASE_SRC;
+      v.src = src;
+    })();
+
+    // 跳转逻辑保持不变
+    skipBtn.onclick = () => location.href = 'index.html';
+    document.getElementById('start').onclick = () => location.href = 'index.html';
+    v.addEventListener('ended', () => location.href = 'index.html');
+
+    // 成功开声后隐藏按钮；若已在播放且非静音也隐藏
+    function hideSoundBtn(){ soundBtn.style.display = 'none'; }
+    v.addEventListener('play', () => { if (!v.muted) hideSoundBtn(); });
+    v.addEventListener('volumechange', () => { if (!v.muted && v.volume > 0) hideSoundBtn(); });
+    soundBtn.addEventListener('click', async () => {
+      try{ v.muted = false; v.volume = 1.0; await v.play(); hideSoundBtn(); }
+      catch(e){ console.warn('Unmute failed:', e); }
+    });
+  </script>
+</body>
+</html>

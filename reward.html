@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>奖励</title>
+  <style>
+    html,body{margin:0;background:#000;}
+    .rw-root{max-width:720px;margin:0 auto;position:relative;background:#000;}
+    .rw-video{display:block;width:100%;height:auto;background:#000;}
+    .rw-white{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:10;transition:opacity 2s linear;}
+    .rw-white.show{opacity:1;}
+    .rw-showcase{position:absolute;inset:0;display:none;z-index:11;}
+    .rw-showcase.show{display:block;}
+    .rw-layer{position:absolute;left:0;right:0;display:flex;justify-content:center;pointer-events:none;}
+    .rw-icon{top:17%; z-index:14;}
+    .rw-power{top:25%; z-index:15;}
+    .rw-glow{top:25%; z-index:11;}
+    .rw-gradient{top:0; bottom:0; z-index:12; align-items:flex-end;}
+    .rw-sprite{top:36%; z-index:13;}
+    .rw-confetti{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:20;}
+    .rw-confetti i{position:absolute;width:8px;height:12px;border-radius:2px;opacity:.9;animation:fall 2.2s forwards ease-in;}
+    @keyframes fall{0%{transform:translateY(-10vh) rotate(0deg);}100%{transform:translateY(110vh) rotate(540deg);opacity:0;}}
+    .rw-btn-wrap{position:absolute;left:0;right:0;top:63%;display:flex;justify-content:center;z-index:16;}
+    .rw-btn{pointer-events:auto;border:none;background:transparent;padding:0;cursor:pointer;}
+    .rw-btn img{display:block;width:211.2px;height:auto;}
+    .rw-icon img{width:72px;height:auto;}
+    .rw-power img{width:220px;height:auto;}
+    .rw-glow img{width:558px;height:auto;}
+    .rw-sprite img{width:240px;height:auto;}
+    .rw-gradient img{width:720px;height:auto;}
+    .rw-audio-tip{position:absolute;inset:0;display:none;align-items:center;justify-content:center;z-index:9;}
+    .rw-audio-tip.show{display:flex;}
+    .rw-audio-tip button{pointer-events:auto;display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:999px;border:0;cursor:pointer;background:rgba(0,0,0,.55);backdrop-filter:blur(2px);color:#fff;font-size:16px;line-height:1;box-shadow:0 6px 16px rgba(0,0,0,.35);}
+    .rw-audio-tip svg{width:22px;height:22px;display:block}
+  </style>
+</head>
+<body>
+  <div class="rw-root">
+    <video id="rwVideo" class="rw-video" playsinline webkit-playsinline muted></video>
+    <div id="rwAudioTip" class="rw-audio-tip">
+      <button id="rwAudioBtn" title="サウンドON">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M3 10v4a1 1 0 0 0 1 1h3l4.293 4.293A1 1 0 0 0 13 18V6a1 1 0 0 0-1.707-.707L7 9H4a1 1 0 0 0-1 1z"/>
+          <path d="M16.5 8.5a4 4 0 0 1 0 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <path d="M18.5 6.5a7 7 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        サウンドON
+      </button>
+    </div>
+    <div id="rwWhite" class="rw-white"></div>
+    <div id="rwShow" class="rw-showcase">
+      <div class="rw-layer rw-glow"><img id="imgGlow" alt="glow"></div>
+      <div class="rw-layer rw-gradient" style="align-items:flex-end"><img id="imgGrad" alt="overlay"></div>
+      <div class="rw-layer rw-sprite"><img id="imgSprite" alt="sprite"></div>
+      <div class="rw-layer rw-icon"><img id="imgIcon" alt="icon"></div>
+      <div class="rw-layer rw-power"><img id="imgPower" alt="power +1"></div>
+      <div id="rwConfetti" class="rw-confetti"></div>
+      <div class="rw-btn-wrap"><button id="btnGo" class="rw-btn" title="せいれいガーデン"><img id="imgBtn" alt="seirei garden"></button></div>
+    </div>
+  </div>
+  <script>
+    const VIDEO_BY_CHEST={forest:'videos/reward_forest.mp4',water:'videos/reward_water.mp4',grass:'videos/reward_grass.mp4'};
+    const DEFAULT_VIDEO='videos/reward_default.mp4';
+    const ASSETS={ icon:{forest:'assets/ui/icon_forest.png',water:'assets/ui/icon_water.png',grass:'assets/ui/icon_grass.png'}, power:'assets/ui/power_plus.png', gradient:'assets/ui/reward_gradient_overlay.png', glow:'assets/effects/glow_loop.gif', btn:'assets/ui/btn_seirei_garden.png' };
+    const SPRITES_DIR='assets/sprites/';
+    function spriteHappy(type,stage){ if(type==='neutral') return SPRITES_DIR+'neutral_juvenile_happy.gif'; return `${SPRITES_DIR}${type}_${stage}_happy.gif`; }
+
+    const KEY='zooGameProgress';
+    const initState={totalOpens:0,energy:{forest:0,water:0,grass:0},creatures:[{id:1,type:'neutral',stage:'juvenile',progress:0,splitDone:false}],nextId:2,nickname:''};
+    function read(){try{const s=JSON.parse(localStorage.getItem(KEY))||structuredClone(initState); (s.creatures||[]).forEach(c=>{if(typeof c.progress!=='number')c.progress=0;if(typeof c.splitDone!=='boolean')c.splitDone=false;}); return s;}catch{return structuredClone(initState);}}
+    async function write(state){localStorage.setItem(KEY,JSON.stringify(state));}
+
+    const LEVEL=3;
+    function pickTarget(state,E){
+      const byId=a=>a.sort((x,y)=>x.id-y.id)[0]||null;
+      const j=byId(state.creatures.filter(c=>c.type===E&&c.stage==='juvenile'&&c.progress<LEVEL)); if(j) return j;
+      const t=byId(state.creatures.filter(c=>c.type===E&&c.stage==='teen'&&c.progress<LEVEL));     if(t) return t;
+      const a=byId(state.creatures.filter(c=>c.type===E&&c.stage==='adult'&&!c.splitDone&&c.progress<LEVEL)); if(a) return a;
+      const n=state.creatures.find(c=>c.type==='neutral'&&c.stage==='juvenile'&&c.progress===0); if(n) return n;
+      return null;
+    }
+    function giveEnergyOnce(state,E){
+      const events=[]; const target=pickTarget(state,E);
+      if(target){
+        if(target.type==='neutral'){const before={...target};target.type=E;target.progress=1;events.push({kind:'bind',from:before,to:{...target}});return events;}
+        target.progress++;
+        if(target.stage==='juvenile'&&target.progress>=LEVEL){const before={...target};target.stage='teen';target.progress=0;events.push({kind:'evolve',from:before,to:{...target}});}
+        else if(target.stage==='teen'&&target.progress>=LEVEL){const before={...target};target.stage='adult';target.progress=0;target.splitDone=false;events.push({kind:'evolve',from:before,to:{...target}});}
+        else if(target.stage==='adult'&&!target.splitDone&&target.progress>=LEVEL){const parentBefore={...target};target.progress=0;target.splitDone=true;const newborn={id:state.nextId++,type:'neutral',stage:'juvenile',progress:0,splitDone:false};state.creatures.push(newborn);events.push({kind:'split',parent:parentBefore,newborn:{...newborn}});}
+        return events;
+      }
+      const newborn={id:state.nextId++,type:E,stage:'juvenile',progress:1,splitDone:false};state.creatures.push(newborn);events.push({kind:'spawn',newborn:{...newborn}});return events;
+    }
+
+    const params=new URLSearchParams(location.search);
+    const chest=(params.get('chest')||'unknown').toLowerCase();
+    const videoEl=document.getElementById('rwVideo');
+    const whiteEl=document.getElementById('rwWhite');
+    const showEl=document.getElementById('rwShow');
+    const confettiC=document.getElementById('rwConfetti');
+    const imgIcon=document.getElementById('imgIcon');
+    const imgPower=document.getElementById('imgPower');
+    const imgGlow=document.getElementById('imgGlow');
+    const imgGrad=document.getElementById('imgGrad');
+    const imgSprite=document.getElementById('imgSprite');
+    const imgBtn=document.getElementById('imgBtn');
+    const btnGo=document.getElementById('btnGo');
+    const audioTip = document.getElementById('rwAudioTip');
+    const audioBtn = document.getElementById('rwAudioBtn');
+
+    imgPower.src=ASSETS.power; imgGrad.src=ASSETS.gradient; imgGlow.src=ASSETS.glow; imgBtn.src =ASSETS.btn; imgIcon.src=ASSETS.icon[chest] || ASSETS.icon.forest;
+    btnGo.addEventListener('click',()=>location.href='spirit.html');
+
+    let rewardApplied=false, overlayStarted=false, overlayShown=false;
+    function applyRewardOnce(){
+      if(rewardApplied) return [];
+      rewardApplied=true;
+      const st=read(); st.totalOpens+=1; if(!st.energy[chest]) st.energy[chest]=0; st.energy[chest]+=1;
+      let ev=[]; if(['forest','water','grass'].includes(chest)) ev=giveEnergyOnce(st,chest);
+      write(st); setSpriteFromEvents(ev); return ev;
+    }
+    function setSpriteFromEvents(events){
+      let type='neutral', stage='juvenile';
+      const eEvo=events.find(e=>e.kind==='evolve'), eSpl=events.find(e=>e.kind==='split'), eBind=events.find(e=>e.kind==='bind'), eSpwn=events.find(e=>e.kind==='spawn');
+      if(eEvo){ type=eEvo.to.type; stage=eEvo.to.stage; }
+      else if(eSpl){ type='neutral'; stage='juvenile'; }
+      else if(eBind){ type=eBind.to.type; stage='juvenile'; }
+      else if(eSpwn){ type=eSpwn.newborn.type; stage='juvenile'; }
+      imgSprite.src = spriteHappy(type, stage);
+    }
+    function startOverlay(){
+      if(overlayStarted) return; overlayStarted=true;
+      applyRewardOnce();
+      whiteEl.classList.add('show');
+      const done = ()=>{ if(overlayShown) return; overlayShown=true; showEl.classList.add('show'); startConfetti(); };
+      whiteEl.addEventListener('transitionend', done, {once:true});
+      setTimeout(done, 2100);
+    }
+
+    async function playWithSound(){
+      try{ videoEl.muted = false; await videoEl.play(); audioTip.classList.remove('show'); }
+      catch{ try{ videoEl.muted = true; await videoEl.play(); }catch{} audioTip.classList.add('show');
+        const enable = ()=>{ videoEl.muted = false; videoEl.play().catch(()=>{}); audioTip.classList.remove('show'); document.removeEventListener('click', enable); document.removeEventListener('touchstart', enable); };
+        audioBtn.addEventListener('click', enable, {once:true}); document.addEventListener('click', enable, {once:true}); document.addEventListener('touchstart', enable, {once:true});
+      }
+    }
+    function wireVideo(){
+      const src=VIDEO_BY_CHEST[chest] || DEFAULT_VIDEO;
+      videoEl.src=src; videoEl.playsInline=true; playWithSound();
+      let duration=NaN; videoEl.addEventListener('loadedmetadata',()=>{duration=videoEl.duration||NaN;});
+      videoEl.addEventListener('timeupdate',()=>{ if(!overlayStarted && isFinite(duration) && duration - videoEl.currentTime <= 2.0){ startOverlay(); } });
+      videoEl.addEventListener('ended',()=>{ if(!overlayStarted) startOverlay(); });
+      setTimeout(()=>{ if(!overlayStarted) startOverlay(); }, 4500);
+    }
+
+    let confettiTimer=null;
+    function spawnConfettiBurst(k=14){
+      const colors=['#ff7676','#ffd166','#06d6a0','#118ab2','#9b5de5','#f15bb5','#ffc6ff'];
+      const w=confettiC.clientWidth||720;
+      for(let i=0;i<k;i++){
+        const p=document.createElement('i');
+        p.style.left=(Math.random()*w)+'px';
+        p.style.background=colors[(Math.random()*colors.length)|0];
+        p.style.animationDelay=(Math.random()*0.35)+'s';
+        p.style.animationDuration=(1.8+Math.random()*1.4)+'s';
+        p.addEventListener('animationend',()=>p.remove());
+        confettiC.appendChild(p);
+      }
+    }
+    function startConfetti(totalMs=2400, intervalMs=160, perBurst=12){
+      spawnConfettiBurst(perBurst);
+      confettiTimer=setInterval(()=>spawnConfettiBurst(perBurst), intervalMs);
+      setTimeout(()=>{ if(confettiTimer){clearInterval(confettiTimer);confettiTimer=null;} }, totalMs);
+    }
+    wireVideo();
+  </script>
+</body>
+</html>

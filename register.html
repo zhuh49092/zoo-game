@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>登録 / ログイン</title>
+  <link rel="stylesheet" href="assets/style.css"/>
+  <style>
+    :root{
+      --stageW: min(100vw, 720px);
+      --stageH: calc(var(--stageW) * (1280 / 720));
+      --fieldW: calc(var(--stageW) - 200px);
+      --theme: #23ae99;
+      --btnH: 56px;
+      --fzBtn: 20px;
+      /* 底部精灵带参数 */
+      --paradeH: 200px;
+      --paradeGap: 224px;
+    }
+    html, body { margin:0 !important; padding:0 !important; height:100%; }
+    body{ background:#fef9f1 !important; }
+    #stage, #stage * { box-sizing:border-box; }
+    #stage, #stage .container, #stage .section, #stage .card, #stage .inner {
+      margin:0 !important; padding:0 !important; border:0 !important; border-radius:0 !important;
+      background:transparent !important; box-shadow:none !important;
+    }
+    #stage{ width:100vw !important; min-height:100vh !important; display:block !important; }
+    #stage .wrap{
+      width:var(--stageW) !important;
+      min-height:var(--stageH) !important;
+      margin:0 auto !important;
+      padding: calc(clamp(88px, 12vh, 160px) + 200px) 0 calc(var(--paradeH) + var(--paradeGap)) 0 !important;
+      position:relative !important; text-align:center !important;
+      background: url("assets/bg/register.jpg") center/cover no-repeat !important;
+    }
+    #stage .title{ display:block; margin:0 auto 16px auto !important; width:min(65%, 448px) !important; height:auto !important; }
+    #stage .tabs{ display:flex; gap:12px; justify-content:center; margin: 6px 0 18px 0 !important; }
+    #stage .tab{
+      min-width: 220px !important; height: var(--btnH) !important; padding: 0 22px !important;
+      border-radius: 999px !important; display:inline-flex !important; align-items:center !important; justify-content:center !important;
+      font-size: var(--fzBtn) !important; font-weight:700 !important; cursor:pointer !important;
+      background: #fff !important; color:#111 !important; border:2px solid rgba(0,0,0,.08) !important;
+    }
+    #stage .tab.on{ background: var(--theme) !important; color:#fff !important; border-color: transparent !important; }
+    #stage .form-col{ width:100% !important; display:flex !important; flex-direction:column !important; align-items:center !important; gap:14px !important; }
+    #stage input[type="text"], #stage input:not([type]), #stage .btn, #msg, #altBox .btn{ width: var(--fieldW) !important; margin: 0 auto !important; }
+    #stage input[type="text"], #stage input:not([type]){ height: var(--btnH) !important; border-radius:16px !important; padding:0 16px !important; border:2px solid rgba(0,0,0,.15) !important; background: rgba(255,255,255,.92) !important; font-size:18px !important; }
+    #stage input:focus{ border-color: var(--theme) !important; box-shadow:0 0 0 3px rgba(35,174,153,.15) !important; }
+    #stage .btn{ height: var(--btnH) !important; border-radius:16px !important; border:none !important; background: var(--theme) !important; color:#fff !important; font-weight:700 !important; font-size: var(--fzBtn) !important; display:inline-flex !important; align-items:center !important; justify-content:center !important; cursor:pointer !important; }
+    #stage .btn.secondary{ background: #fff !important; color: var(--theme) !important; border:2px solid var(--theme) !important; }
+    #msg{ min-height: 1.6em !important; color:#333 !important; line-height:1.6 !important; font-size:18px !important; }
+    #altBox{ display:flex !important; flex-direction:column !important; align-items:center !important; gap:14px !important; }
+    /* 底部幼年精灵跑马带 */
+    #paradeFrame{ position:absolute !important; left:0 !important; right:0 !important; bottom:var(--paradeGap) !important; width:100% !important; height:var(--paradeH) !important; pointer-events:none !important; overflow:hidden !important; }
+    #parade{ position:absolute !important; left:0; top:50% !important; transform: translateY(-50%); height:var(--paradeH) !important; }
+    #parade .sprite{ position:absolute !important; top:50% !important; transform:translate(-50%,-50%); width:200px !important; height:auto !important; }
+    @media (prefers-reduced-motion: reduce){ #paradeFrame{ display:none !important; } }
+  </style>
+</head>
+<body>
+  <main id="stage">
+    <div class="wrap">
+      <img class="title" src="assets/ui/title_register.png" alt="あなたの名前は？">
+      <div class="tabs">
+        <div class="tab on" id="tabReg">登録（新規）</div>
+        <div class="tab" id="tabLogin">ログイン（既存）</div>
+      </div>
+      <form id="authForm" autocomplete="off" autocapitalize="off" spellcheck="false" class="form-col">
+        <input id="uid" placeholder="IDを入力してね" autocomplete="off" autocapitalize="off" spellcheck="false" type="text"/>
+        <button class="btn" id="go">登録する</button>
+      </form>
+      <p id="msg"></p>
+      <div id="altBox"></div>
+
+      <!-- ✅ 底部幼年精灵跑马带 -->
+      <div id="paradeFrame" aria-hidden="true"><div id="parade"></div></div>
+    </div>
+  </main>
+
+  <script src="assets/api.js"></script>
+  <script>
+  // ============ 注册/登录逻辑 ============ 
+  document.addEventListener('DOMContentLoaded', () => {
+    const KEY = 'zooGameProgress';
+    const KEY_UID = 'zooUserId';
+    const form = document.getElementById('authForm');
+    const uidInput = document.getElementById('uid');
+    const msg = document.getElementById('msg');
+    const altBox = document.getElementById('altBox');
+    const tabReg = document.getElementById('tabReg');
+    const tabLogin = document.getElementById('tabLogin');
+    const goBtn = document.getElementById('go');
+    let mode = 'reg';
+
+    function setMode(m){
+      mode = m;
+      tabReg.classList.toggle('on', m==='reg');
+      tabLogin.classList.toggle('on', m==='login');
+      msg.textContent = ''; altBox.innerHTML = '';
+      goBtn.textContent = (m==='reg') ? '登録する' : 'ログイン';
+    }
+    tabReg.onclick = ()=> setMode('reg');
+    tabLogin.onclick = ()=> setMode('login');
+
+    function writeProgress(p){ localStorage.setItem(KEY, JSON.stringify(p)); }
+    function saveUid(id){ localStorage.setItem(KEY_UID, id); }
+    function suggestIds(base){
+      const rnd4 = () => Math.random().toString(36).slice(2,6);
+      return [`${base}-${Math.floor(1000+Math.random()*9000)}`,
+              `${base}#${Math.floor(1000+Math.random()*9000)}`,
+              `${base}_${rnd4()}`];
+    }
+
+    async function createOrLogin(id){
+      const ck2 = await apiCheckId(id);
+      if (!ck2.ok) throw new Error('check failed');
+
+      if (mode==='reg' && ck2.exists) {
+        msg.innerHTML = 'このIDはもう使われています。<br/>別のIDを選ぶか、ログインしてください。';
+        altBox.innerHTML = '';
+        const toLogin = document.createElement('button');
+        toLogin.className = 'btn secondary'; toLogin.textContent = 'ログインへ';
+        toLogin.onclick = () => setMode('login');
+        altBox.appendChild(toLogin);
+        suggestIds(id).forEach(s => {
+          const b = document.createElement('button');
+          b.className = 'btn'; b.textContent = s; b.onclick = () => createOrLogin(s);
+          altBox.appendChild(b);
+        });
+        return;
+      }
+      if (mode==='login' && !ck2.exists) {
+        msg.textContent = 'このIDは見つかりません。まず登録してください。';
+        altBox.innerHTML = '';
+        const toReg = document.createElement('button');
+        toReg.className = 'btn secondary'; toReg.textContent = '登録へ';
+        toReg.onclick = () => setMode('reg');
+        altBox.appendChild(toReg);
+        return;
+      }
+
+      msg.textContent = (mode==='reg') ? '登録中…' : 'ログイン中…';
+      const res = await apiLoadProgress(id);
+      if (!res.ok) throw new Error(res.error || 'failed');
+      saveUid(id); writeProgress(res.progress);
+      location.href = 'intro.html';
+    }
+
+    form.addEventListener('submit', async (ev) => {
+      ev.preventDefault(); altBox.innerHTML = '';
+      const id = (uidInput.value || '').trim();
+      if (!id){ msg.textContent = 'IDを入力してね'; return; }
+      msg.textContent = '確認中…';
+      try{
+        const ck = await apiCheckId(id);
+        if (!ck.ok) throw new Error('check failed');
+
+        if (mode === 'reg') {
+          if (ck.exists) {
+            msg.innerHTML = 'このIDはもう使われています。<br/>別のIDを選ぶか、ログインしてください。';
+            const toLogin = document.createElement('button');
+            toLogin.className = 'btn secondary'; toLogin.textContent = 'ログインへ';
+            toLogin.onclick = () => setMode('login');
+            altBox.appendChild(toLogin);
+            suggestIds(id).forEach(s => {
+              const b = document.createElement('button');
+              b.className = 'btn'; b.textContent = s; b.onclick = () => createOrLogin(s);
+              altBox.appendChild(b);
+            });
+            return;
+          }
+          await createOrLogin(id); return;
+        }
+
+        if (!ck.exists) {
+          msg.textContent = 'このIDは見つかりません。まず登録してください。';
+          const toReg = document.createElement('button');
+          toReg.className = 'btn secondary'; toReg.textContent = '登録へ';
+          toReg.onclick = () => setMode('reg');
+          altBox.appendChild(toReg);
+          return;
+        }
+        await createOrLogin(id);
+      }catch(e){
+        console.error(e);
+        msg.textContent = 'エラーが発生しました。しばらくしてから試してね。';
+      }
+    });
+
+    setMode('reg');
+  });
+
+  // ============ UI：底部幼年精灵跑马带 ============ 
+  (function(){
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduced) return;
+    const frame = document.getElementById('paradeFrame');
+    const parade = document.getElementById('parade');
+    if (!frame || !parade) return;
+    const SPRITES = [
+      "assets/sprites/neutral_juvenile_idle.GIF",
+      "assets/sprites/neutral_juvenile_happy.GIF",
+      "assets/sprites/forest_juvenile_idle.GIF",
+      "assets/sprites/forest_juvenile_happy.GIF",
+      "assets/sprites/grass_juvenile_idle.GIF",
+      "assets/sprites/grass_juvenile_happy.GIF",
+      "assets/sprites/water_juvenile_idle.GIF",
+      "assets/sprites/water_juvenile_happy.GIF"
+    ];
+    const SIZE = 200, GAP = 40, SPEED = 60, PAD = 60, STEP = SIZE + GAP;
+    const W = () => frame.clientWidth;
+    const pick = () => SPRITES[Math.floor(Math.random()*SPRITES.length)];
+    let sprites = [];
+    function build(){
+      parade.innerHTML = ''; sprites = [];
+      const need = Math.ceil( (W() + PAD*2) / STEP ) + 2;
+      for (let i=0; i<need; i++){
+        const img = document.createElement('img');
+        img.className = 'sprite'; img.src = pick();
+        parade.appendChild(img);
+        sprites.push({ el: img, x: W() + PAD + i*STEP });
+      }
+    }
+    const rightmostX = () => Math.max.apply(null, sprites.map(s=>s.x));
+    function resetToTail(s){ s.x = rightmostX() + STEP; s.el.src = pick(); }
+    let last = performance.now();
+    function tick(now){
+      const dt = Math.min(0.05, (now-last)/1000); last = now;
+      const leftBound = -PAD - SIZE;
+      for (const s of sprites){
+        s.x -= SPEED * dt;
+        if (s.x < leftBound) resetToTail(s);
+        s.el.style.left = s.x + 'px';
+      }
+      requestAnimationFrame(tick);
+    }
+    function onResize(){ build(); last = performance.now(); }
+    build(); requestAnimationFrame(tick);
+    window.addEventListener('resize', () => { clearTimeout(window.__r); window.__r=setTimeout(onResize,120); });
+  })();
+  </script>
+</body>
+</html>
