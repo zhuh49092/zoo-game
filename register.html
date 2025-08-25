@@ -2,77 +2,84 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>登録 / ログイン</title>
   <link rel="stylesheet" href="assets/style.css"/>
   <style>
     :root{
+      --stageW: min(100vw, 720px);
+      --stageH: calc(var(--stageW) * (1280 / 720));
       --fieldW: calc(var(--stageW) - 200px);
       --theme: #23ae99;
       --btnH: 56px;
       --fzBtn: 20px;
-      /* 底部精灵带参数（小机型会自动缩小） */
+      /* 底部精灵带参数 */
       --paradeH: 200px;
       --paradeGap: 224px;
     }
-    @media (max-width: 390px){
-      :root{ --paradeH: 140px; --paradeGap: 160px; --fieldW: calc(var(--stageW) - 120px); --btnH: 52px; --fzBtn: 18px; }
+    html, body { margin:0 !important; padding:0 !important; height:100%; }
+    body{ background:#fef9f1 !important; }
+    #stage, #stage * { box-sizing:border-box; }
+    #stage, #stage .container, #stage .section, #stage .card, #stage .inner {
+      margin:0 !important; padding:0 !important; border:0 !important; border-radius:0 !important;
+      background:transparent !important; box-shadow:none !important;
     }
-    body{ background:#fef9f1 }
-    /* 统一舞台：以 100dvh 适配真视口 */
-    .wrap{
-      width:var(--stageW);
-      min-height:100dvh;
-      margin:0 auto;
-      padding: clamp(56px, 10dvh, 120px) 0 calc(var(--paradeH) + var(--paradeGap)) 0;
-      position:relative; text-align:center;
-      background:url("assets/bg/register.jpg") center/cover no-repeat;
+    #stage{ width:100vw !important; min-height:100vh !important; display:block !important; }
+    #stage .wrap{
+      width:var(--stageW) !important;
+      min-height:var(--stageH) !important;
+      margin:0 auto !important;
+      padding: calc(clamp(88px, 12vh, 160px) + 200px) 0 calc(var(--paradeH) + var(--paradeGap)) 0 !important;
+      position:relative !important; text-align:center !important;
+      background: url("assets/bg/register.jpg") center/cover no-repeat !important;
     }
-    .title{ display:block; margin:0 auto 16px auto; width:min(65%, 448px); height:auto; }
-    .tabs{ display:flex; gap:12px; justify-content:center; margin: 6px 0 18px 0; }
-    .tab{
-      min-width:220px; height:var(--btnH); padding:0 22px;
-      border-radius:999px; display:inline-flex; align-items:center; justify-content:center;
-      font-size:var(--fzBtn); font-weight:700; cursor:pointer;
-      background:#fff; color:#111; border:2px solid rgba(0,0,0,.08);
+    #stage .title{ display:block; margin:0 auto 16px auto !important; width:min(65%, 448px) !important; height:auto !important; }
+    #stage .tabs{ display:flex; gap:12px; justify-content:center; margin: 6px 0 18px 0 !important; }
+    #stage .tab{
+      min-width: 220px !important; height: var(--btnH) !important; padding: 0 22px !important;
+      border-radius: 999px !important; display:inline-flex !important; align-items:center !important; justify-content:center !important;
+      font-size: var(--fzBtn) !important; font-weight:700 !important; cursor:pointer !important;
+      background: #fff !important; color:#111 !important; border:2px solid rgba(0,0,0,.08) !important;
     }
-    .tab.on{ background:var(--theme); color:#fff; border-color:transparent; }
-    .form-col{ width:100%; display:flex; flex-direction:column; align-items:center; gap:14px; }
-    input[type="text"], input:not([type]), .btn, #msg, #altBox .btn{ width: var(--fieldW); margin:0 auto; }
-    input[type="text"], input:not([type]){ height:var(--btnH); border-radius:16px; padding:0 16px; border:2px solid rgba(0,0,0,.15); background:rgba(255,255,255,.92); font-size:18px; }
-    input:focus{ border-color:var(--theme); box-shadow:0 0 0 3px rgba(35,174,153,.15); outline:0; }
-    .btn{ height:var(--btnH); border-radius:16px; border:none; background:var(--theme); color:#fff; font-weight:700; font-size:var(--fzBtn); display:inline-flex; align-items:center; justify-content:center; cursor:pointer; }
-    .btn.secondary{ background:#fff; color:var(--theme); border:2px solid var(--theme); }
-    #msg{ min-height:1.6em; color:#333; line-height:1.6; font-size:18px; }
-    #altBox{ display:flex; flex-direction:column; align-items:center; gap:14px; }
-    /* 底部幼年精灵跑马带（延续你的动画逻辑） */
-    #paradeFrame{ position:absolute; left:0; right:0; bottom:var(--paradeGap); width:100%; height:var(--paradeH); pointer-events:none; overflow:hidden; }
-    #parade{ position:absolute; left:0; top:50%; transform:translateY(-50%); height:var(--paradeH); }
-    #parade .sprite{ position:absolute; top:50%; transform:translate(-50%,-50%); width:200px; height:auto; }
-    @media (prefers-reduced-motion: reduce){ #paradeFrame{ display:none } }
+    #stage .tab.on{ background: var(--theme) !important; color:#fff !important; border-color: transparent !important; }
+    #stage .form-col{ width:100% !important; display:flex !important; flex-direction:column !important; align-items:center !important; gap:14px !important; }
+    #stage input[type="text"], #stage input:not([type]), #stage .btn, #msg, #altBox .btn{ width: var(--fieldW) !important; margin: 0 auto !important; }
+    #stage input[type="text"], #stage input:not([type]){ height: var(--btnH) !important; border-radius:16px !important; padding:0 16px !important; border:2px solid rgba(0,0,0,.15) !important; background: rgba(255,255,255,.92) !important; font-size:18px !important; }
+    #stage input:focus{ border-color: var(--theme) !important; box-shadow:0 0 0 3px rgba(35,174,153,.15) !important; }
+    #stage .btn{ height: var(--btnH) !important; border-radius:16px !important; border:none !important; background: var(--theme) !important; color:#fff !important; font-weight:700 !important; font-size: var(--fzBtn) !important; display:inline-flex !important; align-items:center !important; justify-content:center !important; cursor:pointer !important; }
+    #stage .btn.secondary{ background: #fff !important; color: var(--theme) !important; border:2px solid var(--theme) !important; }
+    #msg{ min-height: 1.6em !important; color:#333 !important; line-height:1.6 !important; font-size:18px !important; }
+    #altBox{ display:flex !important; flex-direction:column !important; align-items:center !important; gap:14px !important; }
+    /* 底部幼年精灵跑马带 */
+    #paradeFrame{ position:absolute !important; left:0 !important; right:0 !important; bottom:var(--paradeGap) !important; width:100% !important; height:var(--paradeH) !important; pointer-events:none !important; overflow:hidden !important; }
+    #parade{ position:absolute !important; left:0; top:50% !important; transform: translateY(-50%); height:var(--paradeH) !important; }
+    #parade .sprite{ position:absolute !important; top:50% !important; transform:translate(-50%,-50%); width:200px !important; height:auto !important; }
+    @media (prefers-reduced-motion: reduce){ #paradeFrame{ display:none !important; } }
   </style>
 </head>
-<body class="page" style="background:#fef9f1">
-  <main class="wrap">
-    <img class="title" src="assets/ui/title_register.png" alt="あなたの名前は？">
-    <div class="tabs">
-      <div class="tab on" id="tabReg">登録（新規）</div>
-      <div class="tab" id="tabLogin">ログイン（既存）</div>
-    </div>
-    <form id="authForm" autocomplete="off" autocapitalize="off" spellcheck="false" class="form-col">
-      <input id="uid" placeholder="IDを入力してね" autocomplete="off" autocapitalize="off" spellcheck="false" type="text"/>
-      <button class="btn" id="go">登録する</button>
-    </form>
-    <p id="msg"></p>
-    <div id="altBox"></div>
+<body>
+  <main id="stage">
+    <div class="wrap">
+      <img class="title" src="assets/ui/title_register.png" alt="あなたの名前は？">
+      <div class="tabs">
+        <div class="tab on" id="tabReg">登録（新規）</div>
+        <div class="tab" id="tabLogin">ログイン（既存）</div>
+      </div>
+      <form id="authForm" autocomplete="off" autocapitalize="off" spellcheck="false" class="form-col">
+        <input id="uid" placeholder="IDを入力してね" autocomplete="off" autocapitalize="off" spellcheck="false" type="text"/>
+        <button class="btn" id="go">登録する</button>
+      </form>
+      <p id="msg"></p>
+      <div id="altBox"></div>
 
-    <!-- 底部跑马带 -->
-    <div id="paradeFrame" aria-hidden="true"><div id="parade"></div></div>
+      <!-- ✅ 底部幼年精灵跑马带 -->
+      <div id="paradeFrame" aria-hidden="true"><div id="parade"></div></div>
+    </div>
   </main>
 
   <script src="assets/api.js"></script>
   <script>
-  // ============ 注册/登录逻辑（保留你原逻辑） ============
+  // ============ 注册/登录逻辑 ============ 
   document.addEventListener('DOMContentLoaded', () => {
     const KEY = 'zooGameProgress';
     const KEY_UID = 'zooUserId';
@@ -183,7 +190,7 @@
     setMode('reg');
   });
 
-  // ============ UI：底部幼年精灵跑马带（保留原实现） ============
+  // ============ UI：底部幼年精灵跑马带 ============ 
   (function(){
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduced) return;

@@ -1,109 +1,191 @@
-/* ========== Global Reset ========== */
-*{box-sizing:border-box}
-html,body{margin:0;padding:0}
-img,video{max-width:100%;display:block}
-
-/* 统一变量：舞台宽、引导层级、浮标层级、宝箱尺寸 */
-:root{
-  --stageW: min(100vw, 720px);
-  --z-floating: 2147483647;      /* 浮动按钮 */
-  --z-guide:    2147483648;      /* 引导蒙层（最高） */
-  --z-guide-ui: 2147483649;      /* 蒙层内按钮 */
-  --pinSize: clamp(44px, 9vw, 72px); /* 地图宝箱大小，随屏缩放并有上下限 */
+:root {
+  --bg: #fffaf3;
+  --ink: #2a2a2a;
+  --brand: #41b3a3;
+  --brand-2: #f7b801;
+  --card: #ffffff;
+  --muted: #6b7280;
 }
-
-/* 安全区与动态视口：通用首屏容器 */
-.page{
-  width:100vw;
-  min-height:100dvh;              /* 关键：动态视口高度，iOS 地址栏不吞内容 */
-  background:#000;
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans JP", Arial, sans-serif;
+  color: var(--ink); background: var(--bg);
 }
-
-/* ========== 模式 A：流式 9:16 舞台（index / intro / reward 用） ========== */
-.stage-fluid{
-  width:var(--stageW);
-  min-height:100dvh;
-  margin:0 auto;
-  position:relative;
-  overflow:hidden;
-  background:#000;
+.header {
+  display:flex; justify-content: space-between; align-items:center; gap:12px; padding:12px 16px; position:sticky; top:0; background:rgba(255,250,243,.9); backdrop-filter:saturate(1.2) blur(8px); border-bottom:1px solid #eee;
 }
-.stage-fluid > .fill-cover{
-  position:absolute; inset:0;
-  width:100%; height:100%;
-  object-fit:cover;                /* 重要：铺满但不变形 */
-}
-
-/* 引导蒙层（必须是舞台容器的子元素，才能与底图同缩放） */
-.guide-layer{
-  position:absolute; inset:0;
-  display:none; align-items:center; justify-content:center;
-  z-index:var(--z-guide);
-  background:transparent;
-  touch-action:manipulation;
-}
-.guide-layer.show{ display:flex; }
-.guide-layer img{
-  width:100%; height:100%;
-  object-fit:cover; max-width:none; max-height:none;
-  -webkit-user-drag:none; user-select:none; pointer-events:none;
-}
-.guide-layer .guide-skip{
-  position:absolute; right:12px; top:calc(12px + env(safe-area-inset-top));
-  padding:6px 14px; border:0; border-radius:999px;
-  background:rgba(0,0,0,.35); color:#fff; font-weight:700; font-size:16px;
-  cursor:pointer; z-index:var(--z-guide-ui);
-}
-
-/* 浮动快捷按钮（示例用在 index） */
-.floating-nav{
-  position:fixed;
-  left:calc((100vw - var(--stageW))/2 + 22px);
-  top:calc(env(safe-area-inset-top) + 112px);
-  z-index:var(--z-floating);
-  display:flex; flex-direction:column; gap:12px;
-}
-.floating-nav a{
-  width:clamp(56px, 8vw, 80px); height:clamp(56px, 8vw, 80px);
+.brand { font-weight:700; }
+.header a.btn { text-decoration:none; padding:8px 12px; border-radius:999px; background:var(--brand); color:#fff; font-weight:600; }
+.container { max-width: 720px; margin: 0 auto; padding: 16px; }
+.map-wrap { position:relative; aspect-ratio: 9 / 16; background:#f1f5f9; border:1px dashed #d1d5db; border-radius:16px; overflow:hidden; }
+.map-wrap img { width:100%; height:100%; object-fit:cover; display:block; }
+.hotspot {
+  position:absolute; transform: translate(-50%, -50%);
   display:inline-flex; align-items:center; justify-content:center;
+  width:72px; height:72px; border-radius:50%;
+  background:linear-gradient(180deg,#fff,#f8fafc); border:2px solid #e5e7eb; box-shadow:0 6px 16px rgba(0,0,0,.08);
 }
-.floating-nav img{ width:100%; height:100%; object-fit:contain; }
-
-/* 地图宝箱/卷轴：随舞台宽度缩放 */
-.pin{
-  position:absolute; transform:translate(-50%,-50%);
-  width:var(--pinSize); height:var(--pinSize);
-  background-repeat:no-repeat; background-position:center; background-size:contain;
-  cursor:pointer; z-index:5;
+.hotspot span { font-size:12px; font-weight:700; text-align:center; color:#111; }
+.badge { display:inline-block; padding:4px 8px; border-radius:999px; background:#eef2ff; color:#3730a3; font-weight:700; font-size:12px; }
+.section { margin-top: 16px; }
+.card { background:var(--card); border:1px solid #eee; border-radius:16px; padding:16px; box-shadow:0 8px 24px rgba(0,0,0,.04); }
+.actions { display:flex; gap:10px; flex-wrap:wrap; }
+.btn { appearance:none; border:0; cursor:pointer; padding:10px 14px; border-radius:12px; font-weight:700; background:var(--brand); color:#fff; }
+.btn.secondary { background:#111827; color:#fff; }
+.progress {
+  height:12px; background:#f3f4f6; border-radius:999px; overflow:hidden; position:relative; border:1px solid #e5e7eb;
 }
-.pin:active{ transform:translate(-50%,-48%); }
-
-/* ========== 模式 B：固定 720×1280 画布 + 等比缩放（spirit 用） ========== */
-.stage-fixed-outer{
-  position:fixed; inset:0;
-  display:flex; align-items:center; justify-content:center;
-  overflow:hidden; background:#000;
-  --scale: min(calc(100vw / 720), calc(100dvh / 1280));
+.progress > i { display:block; height:100%; background:linear-gradient(90deg,var(--brand), var(--brand-2)); width:0; }
+.notice { color: var(--muted); font-size: 14px; }
+.video {
+  width:100%; max-width:480px; margin: 16px auto; display:block; background:#000; border-radius:16px; overflow:hidden; }
+.center { text-align:center; }
+.footer { padding:32px 0; color:#6b7280; text-align:center; }
+/* ===== 9:16 舞台及奖励演出样式 ===== */
+.stage-box {
+  position: relative;
+  width: 100%;
+  height: 100%;
 }
-.stage-fixed-canvas{
-  position:relative; width:720px; height:1280px; overflow:hidden; background:#fff;
-  transform:scale(var(--scale)); transform-origin:top center;
+.stage-fill {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+}
+.stage-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  position: relative;
+}
+.sound-btn{
+  position:absolute; right:12px; top:12px; z-index:4;
+  padding:8px 10px; border:0; border-radius:999px;
+  background:#111827; color:#fff; font-weight:700; cursor:pointer;
+  opacity:.85;
+}
+.sound-btn.hide{ display:none; }
+.video-full {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 12px;
 }
 
-/* spirit 内部常用层（示例） */
-.sp-bg{ position:absolute; inset:0; background:#000; z-index:0; }
-.sp-content{ position:absolute; inset:0; z-index:1; }
-.sp-playground{ position:absolute; left:0; right:0; top:360px; bottom:0; overflow:hidden; }
+/* 让白屏上的内容真正盖在最上层：必须先定位，再用 z-index */
+.banner,
+.evo-box,
+.stage-actions {
+  position: relative;   /* 关键：让 z-index 生效 */
+  z-index: 3;
+}
 
-/* 奖励页常用层级 */
-.rw-white{ position:absolute; inset:0; background:#fff; opacity:0; pointer-events:none; z-index:10; transition:opacity 2s linear; }
-.rw-white.show{ opacity:1; }
-.rw-showcase{ position:absolute; inset:0; display:none; z-index:11; }
-.rw-showcase.show{ display:block; }
-.rw-layer{ position:absolute; left:0; right:0; display:flex; justify-content:center; pointer-events:none; }
-.rw-confetti{ position:absolute; inset:0; pointer-events:none; overflow:hidden; z-index:20; }
-.rw-btn-wrap{ position:absolute; left:0; right:0; top:63%; display:flex; justify-content:center; z-index:16; }
-.rw-btn{ pointer-events:auto; border:none; background:transparent; padding:0; cursor:pointer; }
+/* 保险起见：白屏层再抬高一层，确保盖住视频 */
+.overlay { z-index: 10; }
 
-/* 工具类 */
-.hide{ display:none !important; }
+/* 若仍看不到按钮，确认这个规则存在 */
+.stage-actions.show { display: flex; }
+
+
+/* 按钮容器（去精灵中心 / 返回地图） */
+.stage-actions {
+  display: none;
+  gap: 10px;
+  justify-content: center;
+  padding: 12px;
+}
+.stage-actions.show {
+  display: flex;
+}
+
+/* 白屏覆盖层 */
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: #ffffff;
+  opacity: 0;
+  pointer-events: none;
+  border-radius: 12px;
+  transition: opacity 0.6s ease;
+  z-index: 10; /* 保证白屏盖在视频上 */
+}
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto; /* 出现时允许点击按钮 */
+}
+
+/* 纸屑容器与粒子（改为用 top 从 -10px → 110%） */
+.confetti {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 2;
+}
+.confetti i {
+  position: absolute;
+  top: -10px;           /* 从容器顶部之外开始 */
+  width: 8px;
+  height: 12px;
+  border-radius: 2px;
+  opacity: .9;
+  animation-name: confetti-fall;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+  /* 时长和延迟仍由 JS 动态设置 animationDuration/Delay */
+}
+@keyframes confetti-fall {
+  0%   { top: -10px; transform: rotate(0deg); }
+  100% { top: 110%;  transform: rotate(720deg); }
+}
+
+
+
+/* 能量文字横幅 */
+.banner {
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 20px;
+  background: #fff7d6;
+  border: 2px solid #ffd166;
+  box-shadow: 0 6px 18px rgba(0,0,0,.08);
+  z-index: 3;
+}
+
+/* 进化演出（两张图淡入替换，模拟 GIF） */
+.evo-box {
+  position: relative;
+  width: min(70%, 420px);
+  aspect-ratio: 1 / 1;
+  z-index: 3;
+}
+.evo-box img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+.evo-box img.show {
+  opacity: 1;
+}
+.evo-title {
+  font-weight: 800;
+  font-size: 18px;
+  color: #374151;
+}
+
+
+

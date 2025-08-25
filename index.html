@@ -2,52 +2,103 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>夢見ヶ崎動物勇者団｜マップ</title>
   <link rel="stylesheet" href="assets/style.css" />
   <style>
-    /* 仅页面特有的小差异保留在这里（图标素材路径等） */
-    .pin-forest{ background-image:url('assets/icons/chest_forest.png'); }
-    .pin-grass { background-image:url('assets/icons/chest_grass.png'); }
-    .pin-water { background-image:url('assets/icons/chest_water.png'); }
-    .pin-scroll{ background-image:url('assets/icons/scroll.png'); }
+    :root { --stageW: min(100vw, 720px); }
+    html, body { margin:0 !important; padding:0 !important; background:#fef9f1; }
+    #stage, #stage * { box-sizing:border-box; }
+    #stage, #stage .container, #stage .section, #stage .card {
+      display:block !important; width:100vw !important; margin:0 !important; padding:0 !important;
+      border:0 !important; border-radius:0 !important; background:transparent !important; box-shadow:none !important;
+    }
+    #stage .map-wrap{ width:var(--stageW) !important; margin:0 auto !important; position:relative !important; overflow:visible !important; }
+    #stage .map-wrap > img{ width:100% !important; height:auto !important; display:block !important; margin:0 !important; border:none !important; }
+
+    /* 左上两个浮动图标（保持原有层级） */
+    .floating-nav{
+      position:fixed !important;
+      left:calc((100vw - var(--stageW))/2 + 22px) !important;
+      top:calc(env(safe-area-inset-top) + 112px) !important;
+      z-index:2147483647 !important;
+      display:flex !important; flex-direction:column !important; gap:12px !important;
+    }
+    .floating-nav a{ width:clamp(56px, 8vw, 80px) !important; height:clamp(56px, 8vw, 80px) !important; display:inline-flex !important; align-items:center !important; justify-content:center !important; }
+    .floating-nav a img{ width:100% !important; height:100% !important; object-fit:contain !important; display:block !important; }
+
+    /* 地图上的宝箱/卷轴 */
+    #stage .pin{ position:absolute !important; transform:translate(-50%,-50%) !important; width:70px !important; height:70px !important; background-repeat:no-repeat !important; background-position:center !important; background-size:contain !important; cursor:pointer !important; z-index:5 !important; }
+    #stage .pin:active{ transform:translate(-50%,-48%) !important; }
+    #stage .pin-forest { background-image:url('assets/icons/chest_forest.png') !important; }
+    #stage .pin-grass  { background-image:url('assets/icons/chest_grass.png')  !important; }
+    #stage .pin-water  { background-image:url('assets/icons/chest_water.png')  !important; }
+    #stage .pin-scroll { background-image:url('assets/icons/scroll.png')       !important; }
+    #stage #fallback{ display:none; width:100%; height:100%; place-items:center; grid-template-columns:repeat(3,1fr); gap:16px; padding:16px; }
+
+    /* ===== 新手指引（放进 #map 内，像素级对齐；不再添加任何全局黑色背景） ===== */
+    #guide-index{
+      position:absolute; inset:0;                 /* 与 #map 完全重合 */
+      z-index:2147483648;                         /* 比 .floating-nav(2147483647) 更高 → 浮标在蒙层之下 */
+      display:none; align-items:center; justify-content:center;
+      background:transparent;                     /* ← 关键：不再额外加黑，完全用你的 PNG */
+      touch-action:manipulation;
+    }
+    #guide-index.show{ display:flex; }
+    #guide-index img{
+      width:100%; height:auto;                    /* 跟随地图等比缩放 */
+      max-width:100%; max-height:none;
+      object-fit:contain;
+      user-select:none; -webkit-user-drag:none; pointer-events:none;
+      display:block;
+    }
+    #guide-index button{
+      position:absolute; right:12px; top:calc(12px + env(safe-area-inset-top));
+      padding:6px 14px; border:0; border-radius:999px;
+      background:rgba(0,0,0,.35); color:#fff; font-weight:700; font-size:16px;
+      cursor:pointer; z-index:2147483649;         /* 按钮位于图片之上 */
+    }
   </style>
 </head>
-<body class="page" style="background:#fef9f1">
-  <!-- 左侧浮动快捷按钮（层级 < 蒙层） -->
+<body>
   <nav class="floating-nav" aria-label="ショートカット">
     <a href="spirit.html" aria-label="精霊センター"><img src="assets/ui/btn_spirit.png" alt="精霊センター"></a>
     <a href="https://padlet.com/dchen85/zoo-padlet-l71381k577vyh6xb" target="_blank" rel="noopener" aria-label="宝物ホール（Padlet）"><img src="assets/ui/btn_padlet.png" alt="宝物ホール"></a>
   </nav>
 
-  <main class="stage-fluid" id="mapStage">
-    <!-- 地图底图（跟舞台同一容器） -->
-    <img src="assets/map.jpg" alt="Map" class="fill-cover" id="mapImg">
+  <main id="stage" class="container">
+    <div class="section card">
+      <div class="map-wrap" id="map">
+        <img src="assets/map.jpg" alt="Map" onerror="this.style.display='none'; document.getElementById('fallback').style.display='grid'">
+        <!-- 卷轴：活动中心 Padlet -->
+        <a class="pin pin-scroll" style="left:76%; top:11%;" href="https://padlet.com/zhuh49092/padlet-g0d3l1jnxdv42n5q" target="_blank" rel="noopener noreferrer" title="イベント掲示板（Padlet）"></a>
+        <!-- 宝箱入口 -->
+        <a class="pin pin-water"  style="left:30%; top:27%;" href="#" onclick="openChest('water')"  title="水辺"></a>
+        <a class="pin pin-grass"  style="left:60%; top:24%;" href="#" onclick="openChest('grass')"  title="草原"></a>
+        <a class="pin pin-grass"  style="left:50%; top:46%;" href="#" onclick="openChest('grass')"  title="草原"></a>
+        <a class="pin pin-forest" style="left:50%; top:10%;" href="#" onclick="openChest('forest')" title="森林"></a>
+        <a class="pin pin-forest" style="left:82%; top:31%;" href="#" onclick="openChest('forest')" title="森林"></a>
+        <a class="pin pin-forest" style="left:30%; top:65%;" href="#" onclick="openChest('forest')" title="森林"></a>
+        <div id="fallback">
+          <a class="btn" href="#" onclick="openChest('forest')">森の宝箱</a>
+          <a class="btn" href="#" onclick="openChest('water')">水辺の宝箱</a>
+          <a class="btn" href="#" onclick="openChest('grass')">草原の宝箱</a>
+        </div>
 
-    <!-- 卷轴：活动中心 Padlet -->
-    <a class="pin pin-scroll" style="left:76%; top:11%;" href="https://padlet.com/zhuh49092/padlet-g0d3l1jnxdv42n5q" target="_blank" rel="noopener noreferrer" title="イベント掲示板（Padlet）"></a>
-
-    <!-- 宝箱入口（链接到各 Google Form，预填 UID） -->
-    <a class="pin pin-water"  style="left:30%; top:27%;" href="#" onclick="openChest('water')"  title="水辺"></a>
-    <a class="pin pin-grass"  style="left:60%; top:24%;" href="#" onclick="openChest('grass')"  title="草原"></a>
-    <a class="pin pin-grass"  style="left:50%; top:46%;" href="#" onclick="openChest('grass')"  title="草原"></a>
-    <a class="pin pin-forest" style="left:50%; top:10%;" href="#" onclick="openChest('forest')" title="森林"></a>
-    <a class="pin pin-forest" style="left:82%; top:31%;" href="#" onclick="openChest('forest')" title="森林"></a>
-    <a class="pin pin-forest" style="left:30%; top:65%;" href="#" onclick="openChest('forest')" title="森林"></a>
-
-    <!-- 🔰 指引蒙层（与地图同容器 + 层级最高） -->
-    <section class="guide-layer" id="guide-index" aria-hidden="true">
-      <img id="guide-index-img" alt="guide">
-      <button class="guide-skip" id="guide-index-skip">スキップ</button>
-    </section>
+        <!-- 🔰 指引层：在 #map 内部，像素级对齐 -->
+        <div id="guide-index" aria-hidden="true">
+          <img id="guide-index-img" alt="guide">
+          <button id="guide-index-skip">スキップ</button>
+        </div>
+      </div>
+    </div>
   </main>
 
   <script>
-    /* 登录校验（沿用你的 key） */
     const KEY_UID = 'zooUserId';
-    (function requireLogin(){ const uid = localStorage.getItem(KEY_UID); if (!uid) { location.href = 'register.html'; } })();
+    function requireLogin(){ const uid = localStorage.getItem(KEY_UID); if (!uid) { location.href = 'register.html'; throw new Error('no uid'); } return uid; }
+    const USER_ID = requireLogin();
 
-    /* Google Forms 预填 UID（按你之前的结构） */
     const GOOGLE_FORMS = {
       forest: 'https://docs.google.com/forms/d/e/1FAIpQLSe-umCP58ragoaZpKCY7DI-4GkAK1GD9bXNpGb3uwuAKyVKIQ/viewform',
       water:  'https://docs.google.com/forms/d/e/1FAIpQLSehivQhizS3siNa_MnVH_NPTTpDhoco8n5-Mk09gTzeXQispQ/viewform',
@@ -67,41 +118,49 @@
       if(!url){ alert('この宝箱のフォーム URL が設定されていません'); return; }
       window.location.href = url;
     }
-
-    /* 新手指引：仅首次；?tour=1 强制显示；版本号 v6 */
-    (function(){
-      const steps=[
-        'assets/guide/index/step-1.png',
-        'assets/guide/index/step-2.png',
-        'assets/guide/index/step-3.png',
-        'assets/guide/index/step-4.png'
-      ];
-      const KEY='guide:index:v6';
-      const force=new URLSearchParams(location.search).has('tour');
-      const seen=localStorage.getItem(KEY)==='1';
-      if(seen && !force) return;
-
-      const wrap=document.getElementById('guide-index');
-      const img=document.getElementById('guide-index-img');
-      const skip=document.getElementById('guide-index-skip');
-      let i=0;
-
-      function showStep(n){ img.src=steps[n]; }
-      function closeGuide(){
-        wrap.classList.remove('show');
-        wrap.setAttribute('aria-hidden','true');
-      }
-      function next(){
-        i++;
-        if(i<steps.length){ showStep(i); }
-        else { try{ localStorage.setItem(KEY,'1'); }catch(e){} closeGuide(); }
-      }
-
-      wrap.addEventListener('click', next);
-      skip.addEventListener('click', e=>{ e.stopPropagation(); try{ localStorage.setItem(KEY,'1'); }catch(e){} closeGuide(); });
-
-      showStep(0); wrap.classList.add('show'); wrap.setAttribute('aria-hidden','false');
-    })();
   </script>
+
+  <!-- 指引逻辑：仅首次；?tour=1 强制显示；版本号 v6 保证这次必出现 -->
+  <script>
+  (function(){
+    const steps=[
+      'assets/guide/index/step-1.png',
+      'assets/guide/index/step-2.png',
+      'assets/guide/index/step-3.png',
+      'assets/guide/index/step-4.png'
+    ];
+    const KEY='guide:index:v6';                    // ← 升级版本号
+    const force=new URLSearchParams(location.search).has('tour');
+    const seen=localStorage.getItem(KEY)==='1';
+    if(seen && !force) return;
+
+    const wrap=document.getElementById('guide-index');
+    const img=document.getElementById('guide-index-img');
+    const skip=document.getElementById('guide-index-skip');
+    let i=0;
+
+    function showStep(n){ img.src=steps[n]; }
+    function closeGuide(){
+      wrap.classList.remove('show');
+      wrap.setAttribute('aria-hidden','true');
+    }
+    function next(){
+      i++;
+      if(i<steps.length){ showStep(i); }
+      else{
+        try{ localStorage.setItem(KEY,'1'); }catch(e){}
+        closeGuide();
+      }
+    }
+
+    wrap.addEventListener('click', next);
+    skip.addEventListener('click', e=>{ e.stopPropagation(); try{ localStorage.setItem(KEY,'1'); }catch(e){} closeGuide(); });
+
+    showStep(0);
+    wrap.classList.add('show');
+    wrap.setAttribute('aria-hidden','false');
+  })();
+  </script>
+
 </body>
 </html>
