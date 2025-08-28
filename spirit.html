@@ -28,7 +28,7 @@
     .sp-sprite img{ width:100%; height:100%; display:block; pointer-events:none; }
     @media (max-width:760px){ .sp-btn-map{ width:60px; height:60px; right:14px; top:14px; } }
 
-    /* ===== 新手指引（贴在画布内，完全用PNG；比所有UI层级更高） ===== */
+    /* ===== 新手指引（贴在画布内，PNG 叠加；层级最高） ===== */
     #guide-spirit{
       position:absolute; inset:0;
       z-index:2147483648;
@@ -186,7 +186,7 @@
     canvas.addEventListener('pointermove',e=>{ if(!isPanning||e.pointerType!=='mouse') return; ox=startOrigin.x+(e.clientX-panStart.x); oy=startOrigin.y+(e.clientY-panStart.y); applyTransform(); });
     canvas.addEventListener('pointerup',()=>{ isPanning=false; });
 
-    /* ===== 进入页面：优先从云端拉取 → 覆盖本地 → 再渲染 ===== */
+    /* ===== 进入页面：先云端→本地→渲染；渲染完成后再显示指引 ===== */
     async function init(){
       try{
         const { ok, progress } = await apiLoadProgress(USER_ID);
@@ -196,39 +196,40 @@
       renderBars(state);
       renderSprites(state);
       applyTransform();
+
+      // ✅ 渲染完成后再检查是否显示指引
+      showGuideIfNeeded();
     }
     init();
-  </script>
 
-  <!-- 指引逻辑：仅首次；?tour=1 强制显示；版本号 v3 保证这次必出现 -->
-  <script>
-  (function(){
-    const steps=['assets/guide/spirit/step-1.png'];
-    const KEY='guide:spirit:v3';
-    const force=new URLSearchParams(location.search).has('tour');
-    const seen=localStorage.getItem(KEY)==='1';
-    if(seen && !force) return;
+    // 指引函数（按需显示）
+    function showGuideIfNeeded(){
+      const steps=['assets/guide/spirit/step-1.png'];
+      const KEY='guide:spirit:v3';
+      const force=new URLSearchParams(location.search).has('tour');
+      const seen=localStorage.getItem(KEY)==='1';
+      if(seen && !force) return;
 
-    const wrap=document.getElementById('guide-spirit');
-    const img=document.getElementById('guide-spirit-img');
-    const skip=document.getElementById('guide-spirit-skip');
+      const wrap=document.getElementById('guide-spirit');
+      const img=document.getElementById('guide-spirit-img');
+      const skip=document.getElementById('guide-spirit-skip');
 
-    let i=0;
-    function showStep(n){ img.src=steps[n]; }
-    function closeGuide(){ wrap.classList.remove('show'); wrap.setAttribute('aria-hidden','true'); }
-    function next(){
-      i++;
-      if(i<steps.length){ showStep(i); }
-      else{ try{ localStorage.setItem(KEY,'1'); }catch(e){} closeGuide(); }
+      let i=0;
+      function showStep(n){ img.src=steps[n]; }
+      function closeGuide(){ wrap.classList.remove('show'); wrap.setAttribute('aria-hidden','true'); }
+      function next(){
+        i++;
+        if(i<steps.length){ showStep(i); }
+        else{ try{ localStorage.setItem(KEY,'1'); }catch(e){} closeGuide(); }
+      }
+
+      wrap.addEventListener('click', next);
+      skip.addEventListener('click', e=>{ e.stopPropagation(); try{ localStorage.setItem(KEY,'1'); }catch(e){} closeGuide(); });
+
+      showStep(0);
+      wrap.classList.add('show');
+      wrap.setAttribute('aria-hidden','false');
     }
-
-    wrap.addEventListener('click', next);
-    skip.addEventListener('click', e=>{ e.stopPropagation(); try{ localStorage.setItem(KEY,'1'); }catch(e){} closeGuide(); });
-
-    showStep(0);
-    wrap.classList.add('show');
-    wrap.setAttribute('aria-hidden','false');
-  })();
   </script>
 </body>
 </html>
