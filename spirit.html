@@ -30,15 +30,15 @@
 
     /* ===== 新手指引（贴在画布内，完全用PNG；比所有UI层级更高） ===== */
     #guide-spirit{
-      position:absolute; inset:0;                    /* 与 .sp-canvas 完全重合 */
-      z-index:2147483648;                            /* 高于 .sp-btn-map(z:9) 等所有UI */
+      position:absolute; inset:0;
+      z-index:2147483648;
       display:none; align-items:center; justify-content:center;
-      background:transparent;                        /* 不额外加黑底，使用PNG自身透明度 */
+      background:transparent;
       touch-action:manipulation;
     }
     #guide-spirit.show{ display:flex; }
     #guide-spirit img{
-      width:100%; height:100%;                       /* 与画布同尺寸(720×1280)覆盖 */
+      width:100%; height:100%;
       max-width:none; max-height:none;
       object-fit:cover;
       user-select:none; -webkit-user-drag:none; pointer-events:none;
@@ -48,7 +48,7 @@
       position:absolute; right:12px; top:calc(12px + env(safe-area-inset-top));
       padding:6px 14px; border:0; border-radius:999px;
       background:rgba(0,0,0,.35); color:#fff; font-weight:700; font-size:16px;
-      cursor:pointer; z-index:2147483649;           /* 在指引图片之上 */
+      cursor:pointer; z-index:2147483649;
     }
   </style>
 </head>
@@ -74,15 +74,42 @@
     </div>
   </div>
 
+  <!-- 与后端通信 -->
+  <script src="assets/api.js"></script>
   <script>
-    const KEY_UID='zooUserId';
-    function requireLogin(){const uid=localStorage.getItem(KEY_UID);if(!uid){location.href='register.html';throw new Error('no uid');}return uid;}
-    requireLogin();
+    /* ===== 登录与键名 ===== */
+    const KEY_UID = 'zooUserId';
+    const KEY_PROGRESS = 'zooGameProgress';
+    function requireLogin(){
+      const uid = localStorage.getItem(KEY_UID);
+      if(!uid){ location.href='register.html'; throw new Error('no uid'); }
+      return uid;
+    }
+    const USER_ID = requireLogin();
 
-    const KEY='zooGameProgress';
-    const empty={ totalOpens:0, energy:{forest:0,water:0,grass:0}, creatures:[{id:1,type:'neutral',stage:'juvenile',progress:0,splitDone:false}], nextId:2, nickname:'' };
-    function read(){ try{ const s=JSON.parse(localStorage.getItem(KEY))||empty; (s.creatures||[]).forEach(c=>{ if(typeof c.progress!=='number') c.progress=0; if(typeof c.splitDone!=='boolean') c.splitDone=false; }); return s; }catch{ return empty; } }
+    /* ===== 本地读存档 ===== */
+    const empty = {
+      totalOpens:0,
+      energy:{forest:0,water:0,grass:0},
+      creatures:[{id:1,type:'neutral',stage:'juvenile',progress:0,splitDone:false}],
+      nextId:2,
+      nickname:''
+    };
+    function readLocal(){
+      try{
+        const s = JSON.parse(localStorage.getItem(KEY_PROGRESS)) || empty;
+        (s.creatures||[]).forEach(c=>{
+          if(typeof c.progress!=='number') c.progress=0;
+          if(typeof c.splitDone!=='boolean') c.splitDone=false;
+        });
+        return s;
+      }catch{ return empty; }
+    }
+    function writeLocal(state){
+      localStorage.setItem(KEY_PROGRESS, JSON.stringify(state));
+    }
 
+    /* ===== 计算能量条 ===== */
     const LEVEL=3;
     function pickTarget(state,E){
       const byId=a=>a.sort((x,y)=>x.id-y.id)[0]||null;
@@ -109,6 +136,7 @@
       });
     }
 
+    /* ===== 精灵渲染与游走 ===== */
     const SPRITE_DIR='assets/sprites/';
     const SPRITE_SIZE={ neutral:{ juvenile: 90 }, forest:{ juvenile:95, teen:150, adult:250 }, water:{ juvenile:95, teen:130, adult:200 }, grass:{ juvenile:95, teen:120, adult:150 } };
     function spriteSrc(c,m){ if(c.type==='neutral') return `${SPRITE_DIR}neutral_juvenile_${m}.gif`; return `${SPRITE_DIR}${c.type}_${c.stage}_${m}.gif`; }
@@ -137,6 +165,7 @@
     }
     function renderSprites(state){ pg.innerHTML=''; state.creatures.slice().sort((a,b)=>a.id-b.id).forEach(c=>createSprite(c)); }
 
+    /* ===== 背景缩放与平移 ===== */
     const content=document.getElementById('sp-content'); const bg=document.getElementById('sp-bg'); const btnMap=document.getElementById('sp-btnMap');
     btnMap.addEventListener('click',()=>location.href='index.html');
     let scale=1, ox=0, oy=0; function applyTransform(){ content.style.transform=`translate(${ox}px,${oy}px) scale(${scale})`; bg.style.transform=`translate(${ox}px,${oy}px) scale(${scale})`; }
@@ -157,14 +186,25 @@
     canvas.addEventListener('pointermove',e=>{ if(!isPanning||e.pointerType!=='mouse') return; ox=startOrigin.x+(e.clientX-panStart.x); oy=startOrigin.y+(e.clientY-panStart.y); applyTransform(); });
     canvas.addEventListener('pointerup',()=>{ isPanning=false; });
 
-    const state=read(); renderBars(state); renderSprites(state); applyTransform();
+    /* ===== 进入页面：优先从云端拉取 → 覆盖本地 → 再渲染 ===== */
+    async function init(){
+      try{
+        const { ok, progress } = await apiLoadProgress(USER_ID);
+        if(ok && progress){ writeLocal(progress); }
+      }catch(e){ /* 忽略网络错误，继续使用本地缓存 */ }
+      const state = readLocal();
+      renderBars(state);
+      renderSprites(state);
+      applyTransform();
+    }
+    init();
   </script>
 
   <!-- 指引逻辑：仅首次；?tour=1 强制显示；版本号 v3 保证这次必出现 -->
   <script>
   (function(){
-    const steps=['assets/guide/spirit/step-1.png']; // 你的实际素材路径
-    const KEY='guide:spirit:v3';                     // 升级版本号，确保显示
+    const steps=['assets/guide/spirit/step-1.png'];
+    const KEY='guide:spirit:v3';
     const force=new URLSearchParams(location.search).has('tour');
     const seen=localStorage.getItem(KEY)==='1';
     if(seen && !force) return;
@@ -175,10 +215,7 @@
 
     let i=0;
     function showStep(n){ img.src=steps[n]; }
-    function closeGuide(){
-      wrap.classList.remove('show');
-      wrap.setAttribute('aria-hidden','true');
-    }
+    function closeGuide(){ wrap.classList.remove('show'); wrap.setAttribute('aria-hidden','true'); }
     function next(){
       i++;
       if(i<steps.length){ showStep(i); }

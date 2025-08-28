@@ -94,24 +94,39 @@
     </div>
   </main>
 
+  <!-- 引入 API -->
+  <script src="assets/api.js"></script>
   <script>
     const KEY_UID = 'zooUserId';
-    function requireLogin(){ const uid = localStorage.getItem(KEY_UID); if (!uid) { location.href = 'register.html'; throw new Error('no uid'); } return uid; }
+    const KEY_PROGRESS = 'zooGameProgress';
+
+    function requireLogin(){
+      const uid = localStorage.getItem(KEY_UID);
+      if (!uid) {
+        location.href = 'register.html';
+        throw new Error('no uid');
+      }
+      return uid;
+    }
     const USER_ID = requireLogin();
 
-    // 宝箱 → Padlet 画板 URL
+    // 登录后若本地没有存档，尝试拉云端
+    if(!localStorage.getItem(KEY_PROGRESS)){
+      apiLoadProgress(USER_ID).then(({ok, progress})=>{
+        if(ok && progress){
+          localStorage.setItem(KEY_PROGRESS, JSON.stringify(progress));
+        }
+      }).catch(()=>{});
+    }
+
     const CHEST_PADLETS = {
       forest: "https://padlet.com/zhuh49092/padlet-hoq08jyf6xlnm45y",
       water:  "https://padlet.com/zhuh49092/padlet-d9twlnjacn9wlvuf",
       grass:  "https://padlet.com/zhuh49092/padlet-dncpyfp2vczxb69t"
     };
-
     function openChest(type){
       const url = CHEST_PADLETS[type];
-      if(!url){
-        alert('この宝箱のPadlet URL が設定されていません');
-        return;
-      }
+      if(!url){ alert('URL未設定'); return; }
       window.open(url, "_blank", "noopener");
     }
   </script>

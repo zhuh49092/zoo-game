@@ -60,32 +60,28 @@
     </div>
   </div>
 
+  <!-- 引入 API -->
+  <script src="assets/api.js"></script>
   <script>
-    /* ===== 新增：登录校验，保证 UID 连续 ===== */
     const KEY_UID = 'zooUserId';
+    const KEY_PROGRESS = 'zooGameProgress';
     function requireLogin(){
       const uid = localStorage.getItem(KEY_UID);
-      if(!uid){
-        // 可选：若你想注册后自动回到本页，可把下一行换成带回跳参数的写法：
-        // location.href = 'register.html?back=' + encodeURIComponent('reward.html' + location.search);
-        location.href = 'register.html';
-        throw new Error('no uid');
-      }
+      if(!uid){ location.href='register.html'; throw new Error('no uid'); }
       return uid;
     }
-    const USER_ID = requireLogin(); // 没 UID 时会被导向注册页
+    const USER_ID = requireLogin();
 
-    /* ===== 以下为你原有的奖励页逻辑 ===== */
+    /* ===== 以下为奖励页逻辑 ===== */
     const VIDEO_BY_CHEST={forest:'videos/reward_forest.mp4',water:'videos/reward_water.mp4',grass:'videos/reward_grass.mp4'};
     const DEFAULT_VIDEO='videos/reward_default.mp4';
     const ASSETS={ icon:{forest:'assets/ui/icon_forest.png',water:'assets/ui/icon_water.png',grass:'assets/ui/icon_grass.png'}, power:'assets/ui/power_plus.png', gradient:'assets/ui/reward_gradient_overlay.png', glow:'assets/effects/glow_loop.gif', btn:'assets/ui/btn_seirei_garden.png' };
     const SPRITES_DIR='assets/sprites/';
     function spriteHappy(type,stage){ if(type==='neutral') return SPRITES_DIR+'neutral_juvenile_happy.gif'; return `${SPRITES_DIR}${type}_${stage}_happy.gif`; }
 
-    const KEY='zooGameProgress';
     const initState={totalOpens:0,energy:{forest:0,water:0,grass:0},creatures:[{id:1,type:'neutral',stage:'juvenile',progress:0,splitDone:false}],nextId:2,nickname:''};
-    function read(){try{const s=JSON.parse(localStorage.getItem(KEY))||structuredClone(initState); (s.creatures||[]).forEach(c=>{if(typeof c.progress!=='number')c.progress=0;if(typeof c.splitDone!=='boolean')c.splitDone=false;}); return s;}catch{return structuredClone(initState);}}
-    async function write(state){localStorage.setItem(KEY,JSON.stringify(state));}
+    function read(){try{const s=JSON.parse(localStorage.getItem(KEY_PROGRESS))||structuredClone(initState); (s.creatures||[]).forEach(c=>{if(typeof c.progress!=='number')c.progress=0;if(typeof c.splitDone!=='boolean')c.splitDone=false;}); return s;}catch{return structuredClone(initState);}}
+    function write(state){ localStorage.setItem(KEY_PROGRESS, JSON.stringify(state)); }
 
     const LEVEL=3;
     function pickTarget(state,E){
@@ -134,7 +130,12 @@
       rewardApplied=true;
       const st=read(); st.totalOpens+=1; if(!st.energy[chest]) st.energy[chest]=0; st.energy[chest]+=1;
       let ev=[]; if(['forest','water','grass'].includes(chest)) ev=giveEnergyOnce(st,chest);
-      write(st); setSpriteFromEvents(ev); return ev;
+      write(st);
+
+      // ★ 新增：保存到云端
+      apiSaveProgress(USER_ID, st).catch(()=>{});
+
+      setSpriteFromEvents(ev); return ev;
     }
     function setSpriteFromEvents(events){
       let type='neutral', stage='juvenile';
