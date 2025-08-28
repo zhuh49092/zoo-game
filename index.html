@@ -16,7 +16,7 @@
     #stage .map-wrap{ width:var(--stageW) !important; margin:0 auto !important; position:relative !important; overflow:visible !important; }
     #stage .map-wrap > img{ width:100% !important; height:auto !important; display:block !important; margin:0 !important; border:none !important; }
 
-    /* 左上两个浮动图标（保持原有层级） */
+    /* 左上浮动图标 */
     .floating-nav{
       position:fixed !important;
       left:calc((100vw - var(--stageW))/2 + 22px) !important;
@@ -36,17 +36,17 @@
     #stage .pin-scroll { background-image:url('assets/icons/scroll.png')       !important; }
     #stage #fallback{ display:none; width:100%; height:100%; place-items:center; grid-template-columns:repeat(3,1fr); gap:16px; padding:16px; }
 
-    /* ===== 新手指引（放进 #map 内，像素级对齐；不再添加任何全局黑色背景） ===== */
+    /* 新手指引 */
     #guide-index{
-      position:absolute; inset:0;                 /* 与 #map 完全重合 */
-      z-index:2147483648;                         /* 比 .floating-nav(2147483647) 更高 → 浮标在蒙层之下 */
+      position:absolute; inset:0;
+      z-index:2147483648;
       display:none; align-items:center; justify-content:center;
-      background:transparent;                     /* ← 关键：不再额外加黑，完全用你的 PNG */
+      background:transparent;
       touch-action:manipulation;
     }
     #guide-index.show{ display:flex; }
     #guide-index img{
-      width:100%; height:auto;                    /* 跟随地图等比缩放 */
+      width:100%; height:auto;
       max-width:100%; max-height:none;
       object-fit:contain;
       user-select:none; -webkit-user-drag:none; pointer-events:none;
@@ -56,14 +56,14 @@
       position:absolute; right:12px; top:calc(12px + env(safe-area-inset-top));
       padding:6px 14px; border:0; border-radius:999px;
       background:rgba(0,0,0,.35); color:#fff; font-weight:700; font-size:16px;
-      cursor:pointer; z-index:2147483649;         /* 按钮位于图片之上 */
+      cursor:pointer; z-index:2147483649;
     }
   </style>
 </head>
 <body>
   <nav class="floating-nav" aria-label="ショートカット">
     <a href="spirit.html" aria-label="精霊センター"><img src="assets/ui/btn_spirit.png" alt="精霊センター"></a>
-    <a href="https://padlet.com/dchen85/zoo-padlet-l71381k577vyh6xb" target="_blank" rel="noopener" aria-label="宝物ホール（Padlet）"><img src="assets/ui/btn_padlet.png" alt="宝物ホール"></a>
+    <!-- 已移除 宝物ホール 图标 -->
   </nav>
 
   <main id="stage" class="container">
@@ -85,7 +85,7 @@
           <a class="btn" href="#" onclick="openChest('grass')">草原の宝箱</a>
         </div>
 
-        <!-- 🔰 指引层：在 #map 内部，像素级对齐 -->
+        <!-- 指引层 -->
         <div id="guide-index" aria-hidden="true">
           <img id="guide-index-img" alt="guide">
           <button id="guide-index-skip">スキップ</button>
@@ -100,34 +100,32 @@
     const USER_ID = requireLogin();
 
     // 宝箱 → Padlet 画板 URL
-const CHEST_PADLETS = {
-  forest: "https://padlet.com/zhuh49092/padlet-hoq08jyf6xlnm45y",
-  water:  "https://padlet.com/zhuh49092/padlet-d9twlnjacn9wlvuf",
-  grass:  "https://padlet.com/zhuh49092/padlet-dncpyfp2vczxb69t"
-};
+    const CHEST_PADLETS = {
+      forest: "https://padlet.com/zhuh49092/padlet-hoq08jyf6xlnm45y",
+      water:  "https://padlet.com/zhuh49092/padlet-d9twlnjacn9wlvuf",
+      grass:  "https://padlet.com/zhuh49092/padlet-dncpyfp2vczxb69t"
+    };
 
-function openChest(type){
-  const url = CHEST_PADLETS[type];
-  if(!url){
-    alert('この宝箱のPadlet URL が設定されていません');
-    return;
-  }
-  // 新标签页打开，避免直接离开网站
-  window.open(url, "_blank", "noopener");
-}
-
+    function openChest(type){
+      const url = CHEST_PADLETS[type];
+      if(!url){
+        alert('この宝箱のPadlet URL が設定されていません');
+        return;
+      }
+      window.open(url, "_blank", "noopener");
+    }
   </script>
 
-  <!-- 指引逻辑：仅首次；?tour=1 强制显示；版本号 v6 保证这次必出现 -->
+  <!-- 指引逻辑：仅首次；?tour=1 强制显示 -->
   <script>
   (function(){
     const steps=[
       'assets/guide/index/step-1.png',
       'assets/guide/index/step-2.png',
-      'assets/guide/index/step-3.png',
-      'assets/guide/index/step-4.png'
+      'assets/guide/index/step-3.png'
+      // 已移除 step-4.png
     ];
-    const KEY='guide:index:v6';                    // ← 升级版本号
+    const KEY='guide:index:v7';  // 升级版本号，保证这次重新显示
     const force=new URLSearchParams(location.search).has('tour');
     const seen=localStorage.getItem(KEY)==='1';
     if(seen && !force) return;
@@ -159,6 +157,5 @@ function openChest(type){
     wrap.setAttribute('aria-hidden','false');
   })();
   </script>
-
 </body>
 </html>
