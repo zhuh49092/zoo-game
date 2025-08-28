@@ -99,25 +99,23 @@
     function requireLogin(){ const uid = localStorage.getItem(KEY_UID); if (!uid) { location.href = 'register.html'; throw new Error('no uid'); } return uid; }
     const USER_ID = requireLogin();
 
-    const GOOGLE_FORMS = {
-      forest: 'https://docs.google.com/forms/d/e/1FAIpQLSe-umCP58ragoaZpKCY7DI-4GkAK1GD9bXNpGb3uwuAKyVKIQ/viewform',
-      water:  'https://docs.google.com/forms/d/e/1FAIpQLSehivQhizS3siNa_MnVH_NPTTpDhoco8n5-Mk09gTzeXQispQ/viewform',
-      grass:  'https://docs.google.com/forms/d/e/1FAIpQLSf3xBbuJN6RPEa9qworZ_sGwDJnGJ6F6eeE5R9BVZVGqBxU7Q/viewform'
-    };
-    const USERID_ENTRY_IDS = { forest: 'entry.112735564', water: 'entry.1623179609', grass: 'entry.684988275' };
-    function getUserId(){ return (localStorage.getItem(KEY_UID) || '').trim(); }
-    function buildPrefilledUrl(type) {
-      const base = GOOGLE_FORMS[type]; if (!base) return '';
-      const entryId = USERID_ENTRY_IDS[type]; const uid = getUserId();
-      if (!entryId || !uid) return base;
-      const sep = base.includes('?') ? '&' : '?';
-      return `${base}${sep}${encodeURIComponent(entryId)}=${encodeURIComponent(uid)}`;
-    }
-    function openChest(type){
-      const url = buildPrefilledUrl(type);
-      if(!url){ alert('この宝箱のフォーム URL が設定されていません'); return; }
-      window.location.href = url;
-    }
+    // 宝箱 → Padlet 画板 URL
+const CHEST_PADLETS = {
+  forest: "https://padlet.com/zhuh49092/padlet-hoq08jyf6xlnm45y",
+  water:  "https://padlet.com/zhuh49092/padlet-d9twlnjacn9wlvuf",
+  grass:  "https://padlet.com/zhuh49092/padlet-dncpyfp2vczxb69t"
+};
+
+function openChest(type){
+  const url = CHEST_PADLETS[type];
+  if(!url){
+    alert('この宝箱のPadlet URL が設定されていません');
+    return;
+  }
+  // 新标签页打开，避免直接离开网站
+  window.open(url, "_blank", "noopener");
+}
+
   </script>
 
   <!-- 指引逻辑：仅首次；?tour=1 强制显示；版本号 v6 保证这次必出现 -->
