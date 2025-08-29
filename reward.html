@@ -478,9 +478,9 @@
     /* ===== 以下为奖励页逻辑 ===== */
     const VIDEO_BY_CHEST={forest:'videos/reward_forest.mp4',water:'videos/reward_water.mp4',grass:'videos/reward_grass.mp4'};
     const DEFAULT_VIDEO='videos/reward_default.mp4';
-    const ASSETS={ icon:{forest:'assets/ui/icon_forest.png',water:'assets/ui/icon_water.png',grass:'assets/ui/icon_grass.png'}, power:'assets/ui/power_plus.png', gradient:'assets/ui/reward_gradient_overlay.png', glow:'assets/effects/glow_loop.gif', btn:'assets/ui/btn_seirei_garden.png' };
+    const ASSETS={ icon:{forest:'assets/ui/icon_forest.png',water:'assets/ui/icon_water.png',grass:'assets/ui/icon_grass.png'}, power:'assets/ui/power_plus.png', gradient:'assets/ui/reward_gradient_overlay.png', glow:'assets/effects/glow_loop.GIF', btn:'assets/ui/btn_seirei_garden.png' };
     const SPRITES_DIR='assets/sprites/';
-    function spriteHappy(type,stage){ if(type==='neutral') return SPRITES_DIR+'neutral_juvenile_happy.gif'; return `${SPRITES_DIR}${type}_${stage}_happy.gif`; }
+    function spriteHappy(type,stage){ if(type==='neutral') return SPRITES_DIR+'neutral_juvenile_happy.GIF'; return `${SPRITES_DIR}${type}_${stage}_happy.GIF`; }
 
     const initState={totalOpens:0,energy:{forest:0,water:0,grass:0},creatures:[{id:1,type:'neutral',stage:'juvenile',progress:0,splitDone:false}],nextId:2,nickname:''};
     function read(){try{const s=JSON.parse(localStorage.getItem(KEY_PROGRESS))||structuredClone(initState); (s.creatures||[]).forEach(c=>{if(typeof c.progress!=='number')c.progress=0;if(typeof c.splitDone!=='boolean')c.splitDone=false;}); return s;}catch{return structuredClone(initState);}}
