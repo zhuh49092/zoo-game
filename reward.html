@@ -285,44 +285,157 @@
           }
         }
         
-        @media (min-width: 769px) {
-          .rw-video {
-            object-fit: cover;
-            width: 100vw;
-            height: 100vh;
+                                                                                                                                               @media (min-width: 769px) {
+             .rw-root {
+               width: 50vw;
+               height: 100vh;
+               position: fixed;
+               left: 50%;
+               top: 0;
+               transform: translateX(-50%);
+             }
+            
+            .rw-video {
+              object-fit: cover;
+              width: 100%;
+              height: 100%;
+            }
+            
+            .rw-gradient img {
+              width: 100%;
+              height: 100%;
+              object-fit: cover;
+              position: absolute;
+              top: 0;
+              left: 0;
+              margin: 0;
+              padding: 0;
+              transform: none;
+            }
+            
+            /* 电脑端组件缩小 */
+            .rw-btn img {
+              width: 120px;
+              height: auto;
+            }
+            
+            .rw-icon img {
+              width: 35px;
+              height: auto;
+            }
+            
+            .rw-power img {
+              width: 240px;
+              height: auto;
+            }
+            
+            .rw-glow img {
+              width: 320px;
+              height: auto;
+            }
+            
+            .rw-sprite img {
+              width: 160px;
+              height: auto;
+            }
+            
+            /* 调整位置 */
+            .rw-btn-wrap {
+              top: 65%;
+            }
+            
+            .rw-icon {
+              top: 15%;
+            }
+            
+            .rw-power {
+              top: 22%;
+            }
+            
+            .rw-glow {
+              top: 22%;
+            }
+            
+            .rw-sprite {
+              top: 32%;
+            }
           }
-          .rw-gradient img {
-            width: 130vw;
-            height: 130vh;
-            object-fit: cover;
-            position: absolute;
-            top: -15vh;
-            left: -15vw;
-            margin: 0;
-            padding: 0;
-            transform: scale(1.3);
-          }
-        }
         
-        /* 横屏模式特殊处理 */
-        @media (orientation: landscape) {
-          .rw-video {
-            object-fit: cover;
-            width: 100vw;
-            height: 100vh;
+                           /* 大屏幕电脑端优化 */
+          @media (min-width: 1200px) {
+            .rw-btn img {
+              width: 140px;
+              height: auto;
+            }
+            
+            .rw-icon img {
+              width: 40px;
+              height: auto;
+            }
+            
+            .rw-power img {
+              width: 280px;
+              height: auto;
+            }
+            
+            .rw-glow img {
+              width: 360px;
+              height: auto;
+            }
+            
+            .rw-sprite img {
+              width: 180px;
+              height: auto;
+            }
           }
-          .rw-gradient img {
-            width: 170vw;
-            height: 170vh;
-            object-fit: cover;
-            position: absolute;
-            top: -35vh;
-            left: -35vw;
-            margin: 0;
-            padding: 0;
-            transform: scale(1.7);
+          
+          /* 超宽屏适配 */
+          @media (min-width: 1600px) {
+            .rw-btn img {
+              width: 160px;
+              height: auto;
+            }
+            
+            .rw-icon img {
+              width: 45px;
+              height: auto;
+            }
+            
+            .rw-power img {
+              width: 320px;
+              height: auto;
+            }
+            
+            .rw-glow img {
+              width: 400px;
+              height: auto;
+            }
+            
+            .rw-sprite img {
+              width: 200px;
+              height: auto;
+            }
           }
-        }
+          
+                  /* 横屏模式特殊处理 */
+          @media (orientation: landscape) and (max-width: 768px) {
+           .rw-video {
+             object-fit: cover;
+             width: 100vw;
+             height: 100vh;
+           }
+           .rw-gradient img {
+             width: 170vw;
+             height: 170vh;
+             object-fit: cover;
+             position: absolute;
+             top: -35vh;
+             left: -35vw;
+             margin: 0;
+             padding: 0;
+             transform: scale(1.7);
+           }
+         }
    </style>
 </head>
 <body>
