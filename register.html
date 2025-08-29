@@ -9,7 +9,7 @@
     :root{
       --stageW: min(100vw, 720px);
       --stageH: calc(var(--stageW) * (1280 / 720));
-      --fieldW: calc(var(--stageW) - 200px);
+      --fieldW: clamp(260px, calc(var(--stageW) - 120px), 560px);
       --theme: #23ae99;
       --btnH: 56px;
       --fzBtn: 20px;
@@ -29,14 +29,14 @@
       width:var(--stageW) !important;
       min-height:var(--stageH) !important;
       margin:0 auto !important;
-      padding: calc(clamp(88px, 12vh, 160px) + 200px) 0 calc(var(--paradeH) + var(--paradeGap)) 0 !important;
+      padding: calc(clamp(60px, 8vh, 120px) + 200px) 0 calc(var(--paradeH) + var(--paradeGap)) 0 !important;
       position:relative !important; text-align:center !important;
       background: url("assets/bg/register.jpg") center/cover no-repeat !important;
     }
     #stage .title{ display:block; margin:0 auto 16px auto !important; width:min(65%, 448px) !important; height:auto !important; }
     #stage .tabs{ display:flex; gap:12px; justify-content:center; margin: 6px 0 18px 0 !important; }
     #stage .tab{
-      min-width: 220px !important; height: var(--btnH) !important; padding: 0 22px !important;
+      min-width: clamp(140px, 34vw, 220px) !important; height: var(--btnH) !important; padding: 0 22px !important;
       border-radius: 999px !important; display:inline-flex !important; align-items:center !important; justify-content:center !important;
       font-size: var(--fzBtn) !important; font-weight:700 !important; cursor:pointer !important;
       background: #fff !important; color:#111 !important; border:2px solid rgba(0,0,0,.08) !important;
@@ -47,6 +47,11 @@
     #stage input[type="text"], #stage input:not([type]){ height: var(--btnH) !important; border-radius:16px !important; padding:0 16px !important; border:2px solid rgba(0,0,0,.15) !important; background: rgba(255,255,255,.92) !important; font-size:18px !important; }
     #stage input:focus{ border-color: var(--theme) !important; box-shadow:0 0 0 3px rgba(35,174,153,.15) !important; }
     #stage .btn{ height: var(--btnH) !important; border-radius:16px !important; border:none !important; background: var(--theme) !important; color:#fff !important; font-weight:700 !important; font-size: var(--fzBtn) !important; display:inline-flex !important; align-items:center !important; justify-content:center !important; cursor:pointer !important; }
+    @media (max-width: 420px){
+      :root{ --btnH: 52px; --fzBtn: 18px; }
+      #stage .wrap{ padding-top: clamp(20px, 4vh, 60px) !important; }
+      #stage .title{ width:min(78%, 420px) !important; }
+    }
     #stage .btn.secondary{ background: #fff !important; color: var(--theme) !important; border:2px solid var(--theme) !important; }
     #msg{ min-height: 1.6em !important; color:#333 !important; line-height:1.6 !important; font-size:18px !important; }
     #altBox{ display:flex !important; flex-direction:column !important; align-items:center !important; gap:14px !important; }

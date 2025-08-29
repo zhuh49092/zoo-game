@@ -24,11 +24,18 @@
       z-index:2147483647 !important;
       display:flex !important; flex-direction:column !important; gap:12px !important;
     }
+    /* 手机端按钮位置调整 */
+    @media (max-width: 768px) {
+      .floating-nav {
+        left: calc((100vw - var(--stageW))/2 + clamp(16px, 3vw, 22px)) !important;
+        top: calc(env(safe-area-inset-top) + clamp(60px, 8vh, 96px)) !important;
+      }
+    }
     .floating-nav a{ width:clamp(56px, 8vw, 80px) !important; height:clamp(56px, 8vw, 80px) !important; display:inline-flex !important; align-items:center !important; justify-content:center !important; }
     .floating-nav a img{ width:100% !important; height:100% !important; object-fit:contain !important; display:block !important; }
 
-    /* 地图上的宝箱/卷轴 */
-    #stage .pin{ position:absolute !important; transform:translate(-50%,-50%) !important; width:70px !important; height:70px !important; background-repeat:no-repeat !important; background-position:center !important; background-size:contain !important; cursor:pointer !important; z-index:5 !important; }
+    /* 地图上的宝箱/卷轴：随视口缩放，保证触控尺寸 */
+    #stage .pin{ position:absolute !important; transform:translate(-50%,-50%) !important; width:clamp(52px, 9vw, 80px) !important; height:clamp(52px, 9vw, 80px) !important; background-repeat:no-repeat !important; background-position:center !important; background-size:contain !important; cursor:pointer !important; z-index:5 !important; }
     #stage .pin:active{ transform:translate(-50%,-48%) !important; }
     #stage .pin-forest { background-image:url('assets/icons/chest_forest.png') !important; }
     #stage .pin-grass  { background-image:url('assets/icons/chest_grass.png')  !important; }
@@ -52,6 +59,13 @@
       user-select:none; -webkit-user-drag:none; pointer-events:none;
       display:block;
     }
+     
+    /* 手机端指引图片对齐优化 */
+    @media (max-width: 768px) {
+      #guide-index img {
+        object-position: top left;
+      }
+    }
     #guide-index button{
       position:absolute; right:12px; top:calc(12px + env(safe-area-inset-top));
       padding:6px 14px; border:0; border-radius:999px;
@@ -70,8 +84,9 @@
     <div class="section card">
       <div class="map-wrap" id="map">
         <img src="assets/map.jpg" alt="Map" onerror="this.style.display='none'; document.getElementById('fallback').style.display='grid'">
-        <!-- 卷轴：活动中心 Padlet -->
-        <a class="pin pin-scroll" style="left:76%; top:11%;" href="https://padlet.com/zhuh49092/padlet-g0d3l1jnxdv42n5q" target="_blank" rel="noopener noreferrer" title="イベント掲示板（Padlet）"></a>
+        
+         <!-- 卷轴：活动中心 Padlet -->
+         <a class="pin pin-scroll" style="left:76%; top:11%;" href="https://padlet.com/zhuh49092/padlet-g0d3l1jnxdv42n5q" target="_blank" rel="noopener noreferrer" title="イベント掲示板（Padlet）"></a>
         <!-- 宝箱入口 -->
         <a class="pin pin-water"  style="left:30%; top:27%;" href="#" onclick="openChest('water')"  title="水辺"></a>
         <a class="pin pin-grass"  style="left:60%; top:24%;" href="#" onclick="openChest('grass')"  title="草原"></a>

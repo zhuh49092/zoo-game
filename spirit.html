@@ -6,27 +6,29 @@
   <title>精灵中心 - 夢見ヶ崎動物勇者団</title>
   <style>
     html,body{margin:0;background:#000;}
-    .sp-canvas{ position:relative; width:720px; height:1280px; margin:0 auto; background:#fff; overflow:hidden; touch-action:none; }
+    /* 使用可缩放画布：宽度填满，维持 9:16 */
+    .sp-canvas{ position:relative; width:min(100vw, 720px); height:calc(min(100vw, 720px) * (16 / 9)); max-height:100vh; margin:0 auto; background:#fff; overflow:hidden; touch-action:none; }
     .sp-bg{ position:absolute; inset:0; background:url('assets/bg/garden.jpg') center/cover no-repeat; transform-origin:0 0; z-index:0; }
-    .sp-content{ position:absolute; inset:0; transform-origin:0 0; z-index:1; }
-    .sp-btn-map{ position:absolute; right:20px; top:20px; z-index:9; width:72px; height:72px; background:url('assets/ui/btn_map.png') center/contain no-repeat; border:none; outline:none; cursor:pointer; }
-    .sp-title{ position:absolute; left:28px; top:24px; width:280px; height:90px; background:url('assets/ui/title_seirei_garden.png') left top / contain no-repeat; }
-    .sp-bars{ position:absolute; left:110px; top:160px; width:520px; }
-    .sp-row{ display:flex; align-items:center; gap:12px; margin:22px 0; }
-    .sp-row .sp-icon{ width:40px; height:40px; background-size:contain; background-repeat:no-repeat; background-position:center; flex:0 0 40px; }
+    .sp-content{ position:absolute; inset:0; z-index:1; }
+    .sp-world{ position:absolute; inset:0; transform-origin:0 0; }
+    .sp-btn-map{ position:absolute; right:20px; top:20px; z-index:9; width:clamp(56px, 9vw, 72px); height:clamp(56px, 9vw, 72px); background:url('assets/ui/btn_map.png') center/contain no-repeat; border:none; outline:none; cursor:pointer; }
+    .sp-title{ position:absolute; left:20px; top:20px; width:clamp(180px, 25vw, 220px); height:clamp(50px, 7vh, 60px); background:url('assets/ui/title_seirei_garden.png') left top / contain no-repeat; }
+    .sp-bars{ position:absolute; left:clamp(16px, 12vw, 110px); top:clamp(56px, 10vh, 160px); width:clamp(240px, 78vw, 520px); }
+    .sp-row{ display:flex; align-items:center; gap:clamp(8px, 2.5vw, 14px); margin:clamp(10px, 2vh, 22px) 0; }
+    .sp-row .sp-icon{ width:clamp(28px, 6vw, 40px); height:clamp(28px, 6vw, 40px); background-size:contain; background-repeat:no-repeat; background-position:center; flex:0 0 auto; }
     .sp-row .sp-icon.sp-forest{ background-image:url('assets/ui/icon_forest.png'); }
     .sp-row .sp-icon.sp-water { background-image:url('assets/ui/icon_water.png'); }
     .sp-row .sp-icon.sp-grass { background-image:url('assets/ui/icon_grass.png'); }
-    .sp-seg3{ display:flex; gap:14px; }
-    .sp-seg{ width:128px; height:22px; border-radius:12px; background:rgba(255,255,255,0.65); box-shadow:inset 0 0 0 2px rgba(0,0,0,0.08); overflow:hidden; }
+    .sp-seg3{ display:flex; gap:clamp(8px, 2vw, 14px); flex:1 1 auto; }
+    .sp-seg{ flex:1 1 0; min-width:0; height:clamp(14px, 2.8vh, 22px); border-radius:999px; background:rgba(255,255,255,0.65); box-shadow:inset 0 0 0 2px rgba(0,0,0,0.08); overflow:hidden; }
     .sp-seg i{ display:block; height:100%; width:0%; }
     .sp-forest .sp-seg i{ background:#2f8f3a; }
     .sp-water  .sp-seg i{ background:#2da8f8; }
     .sp-grass  .sp-seg i{ background:#87c96a; }
-    .sp-playground{ position:absolute; left:0; right:0; top:360px; bottom:0; overflow:hidden; }
+    .sp-playground{ position:absolute; left:0; right:0; top:0; bottom:0; overflow:hidden; }
     .sp-sprite{ position:absolute; pointer-events:auto; user-select:none; transform:translate3d(0,0,0); }
     .sp-sprite img{ width:100%; height:100%; display:block; pointer-events:none; }
-    @media (max-width:760px){ .sp-btn-map{ width:60px; height:60px; right:14px; top:14px; } }
+    @media (max-height: 700px){ .sp-bars{ top:clamp(48px, 10vh, 120px); } }
 
     /* ===== 新手指引（贴在画布内，PNG 叠加；层级最高） ===== */
     #guide-spirit{
@@ -64,7 +66,9 @@
         <div class="sp-row sp-water"><div class="sp-icon sp-water"></div><div class="sp-seg3"><div class="sp-seg"><i id="w1"></i></div><div class="sp-seg"><i id="w2"></i></div><div class="sp-seg"><i id="w3"></i></div></div></div>
         <div class="sp-row sp-grass"><div class="sp-icon sp-grass"></div><div class="sp-seg3"><div class="sp-seg"><i id="g1"></i></div><div class="sp-seg"><i id="g2"></i></div><div class="sp-seg"><i id="g3"></i></div></div></div>
       </div>
-      <div class="sp-playground" id="sp-pg"></div>
+      <div class="sp-world" id="sp-world">
+        <div class="sp-playground" id="sp-pg"></div>
+      </div>
     </div>
 
     <!-- 🔰 新手指引（放在画布内，像素级对齐） -->
@@ -98,12 +102,19 @@
     function readLocal(){
       try{
         const s = JSON.parse(localStorage.getItem(KEY_PROGRESS)) || empty;
-        (s.creatures||[]).forEach(c=>{
+        // 确保 creatures 数组存在
+        if (!s.creatures || !Array.isArray(s.creatures)) {
+          s.creatures = empty.creatures;
+        }
+        s.creatures.forEach(c=>{
           if(typeof c.progress!=='number') c.progress=0;
           if(typeof c.splitDone!=='boolean') c.splitDone=false;
         });
         return s;
-      }catch{ return empty; }
+      }catch(e){ 
+        console.log('Error reading local data:', e);
+        return empty; 
+      }
     }
     function writeLocal(state){
       localStorage.setItem(KEY_PROGRESS, JSON.stringify(state));
@@ -139,16 +150,29 @@
     /* ===== 精灵渲染与游走 ===== */
     const SPRITE_DIR='assets/sprites/';
     const SPRITE_SIZE={ neutral:{ juvenile: 90 }, forest:{ juvenile:95, teen:150, adult:250 }, water:{ juvenile:95, teen:130, adult:200 }, grass:{ juvenile:95, teen:120, adult:150 } };
-    function spriteSrc(c,m){ if(c.type==='neutral') return `${SPRITE_DIR}neutral_juvenile_${m}.gif`; return `${SPRITE_DIR}${c.type}_${c.stage}_${m}.gif`; }
+    function spriteSrc(c,m){ 
+      const src = c.type==='neutral' ? `${SPRITE_DIR}neutral_juvenile_${m}.GIF` : `${SPRITE_DIR}${c.type}_${c.stage}_${m}.GIF`;
+      console.log(`spriteSrc(${c.type}, ${c.stage}, ${m}) = ${src}`);
+      return src;
+    }
     function spriteSize(c){ const w=(SPRITE_SIZE[c.type] && SPRITE_SIZE[c.type][c.stage]) || 120; return {w, h:w}; }
     const pg=document.getElementById('sp-pg');
 
     function createSprite(c){
+      console.log('Creating sprite for creature:', c);
       const wrap=document.createElement('div'); wrap.className='sp-sprite';
       const {w,h}=spriteSize(c); wrap.style.width=w+'px'; wrap.style.height=h+'px';
+      console.log('Sprite size:', {w, h});
       const area=pg.getBoundingClientRect(); const x=Math.random()*(area.width - w); const y=Math.random()*(area.height- h);
       wrap.style.left=x+'px'; wrap.style.top=y+'px';
-      const img=document.createElement('img'); img.src=spriteSrc(c,'idle'); img.alt=`${c.type}_${c.stage}`; wrap.appendChild(img); pg.appendChild(wrap);
+      const img=document.createElement('img'); 
+      const src = spriteSrc(c,'idle');
+      console.log('Sprite src:', src);
+      img.src=src; 
+      img.alt=`${c.type}_${c.stage}`; 
+      wrap.appendChild(img); 
+      pg.appendChild(wrap);
+      console.log('Sprite created and added to playground');
 
       let moving=true, vx=Math.random()*2-1, vy=Math.random()*2-1; const speed=16+Math.random()*20; let last=performance.now();
       function tick(now){ const dt=(now-last)/1000; last=now;
@@ -163,12 +187,20 @@
       function endPress(){ const held=Date.now()-downAt; downAt=0; happyTimer=setTimeout(()=>{ toIdle(); moving=true; }, held>=450?1000:2000); }
       wrap.addEventListener('pointerup',endPress); wrap.addEventListener('pointercancel',endPress); wrap.addEventListener('pointerleave',()=>{ if(downAt) endPress(); });
     }
-    function renderSprites(state){ pg.innerHTML=''; state.creatures.slice().sort((a,b)=>a.id-b.id).forEach(c=>createSprite(c)); }
+    function renderSprites(state){ 
+      console.log('Rendering sprites with state:', state);
+      console.log('Creatures:', state.creatures);
+      pg.innerHTML=''; 
+      state.creatures.slice().sort((a,b)=>a.id-b.id).forEach(c=>{
+        console.log('Creating sprite for:', c);
+        createSprite(c);
+      }); 
+    }
 
     /* ===== 背景缩放与平移 ===== */
-    const content=document.getElementById('sp-content'); const bg=document.getElementById('sp-bg'); const btnMap=document.getElementById('sp-btnMap');
+    const content=document.getElementById('sp-content'); const world=document.getElementById('sp-world'); const bg=document.getElementById('sp-bg'); const btnMap=document.getElementById('sp-btnMap');
     btnMap.addEventListener('click',()=>location.href='index.html');
-    let scale=1, ox=0, oy=0; function applyTransform(){ content.style.transform=`translate(${ox}px,${oy}px) scale(${scale})`; bg.style.transform=`translate(${ox}px,${oy}px) scale(${scale})`; }
+    let scale=1, ox=0, oy=0; function applyTransform(){ world.style.transform=`translate(${ox}px,${oy}px) scale(${scale})`; bg.style.transform='none'; }
 
     const canvas=document.getElementById('sp-canvas'); let lastDist=0, lastCenter=null, isPanning=false, panStart=null, startOrigin=null;
     canvas.addEventListener('touchstart',e=>{ if(e.touches.length===2){ lastDist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
@@ -190,9 +222,17 @@
     async function init(){
       try{
         const { ok, progress } = await apiLoadProgress(USER_ID);
-        if(ok && progress){ writeLocal(progress); }
-      }catch(e){ /* 忽略网络错误，继续使用本地缓存 */ }
+        console.log('API load result:', { ok, progress });
+        if(ok && progress){ 
+          console.log('Writing progress to local storage');
+          writeLocal(progress); 
+        }
+      }catch(e){ 
+        console.log('API load error:', e);
+        /* 忽略网络错误，继续使用本地缓存 */ 
+      }
       const state = readLocal();
+      console.log('Local state:', state);
       renderBars(state);
       renderSprites(state);
       applyTransform();
